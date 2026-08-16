@@ -9,8 +9,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
-import { Fab, Tooltip } from "@mui/material";
-import { LightMode as LightModeIcon, DarkMode as DarkModeIcon } from "@mui/icons-material";
+import { Fab, Tooltip, Box } from "@mui/material";
+import {
+  LightMode as LightModeIcon,
+  DarkMode as DarkModeIcon,
+} from "@mui/icons-material";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: HomeIcon },
@@ -26,158 +29,107 @@ export function Layout({ children }) {
   const { mode, toggleTheme } = useTheme();
   const isDark = mode === "dark";
 
+  const sidebarBg = isDark ? "bg-slate-900" : "bg-white";
+  const sidebarBorder = isDark ? "border-slate-800" : "border-slate-200";
+  const mainBg = isDark ? "bg-slate-950" : "bg-slate-50";
+  const textPrimary = isDark ? "text-slate-100" : "text-slate-900";
+  const textSecondary = isDark ? "text-slate-400" : "text-slate-600";
+  const accentColor = isDark ? "#5844ff" : "#5844ff";
+
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100vh",
-        backgroundColor: isDark ? "#0f172a" : "#f8fafc",
-      }}
-    >
+    <div className={`flex min-h-screen ${mainBg}`}>
       {/* Sidebar */}
       <aside
-        style={{
-          width: "240px",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          borderRight: "1px solid " + (isDark ? "#334155" : "#e2e8f0"),
-          backgroundColor: isDark ? "#1e293b" : "#fff",
-        }}
+        className={`w-64 flex flex-col flex-shrink-0 border-r smooth-transition ${sidebarBg} ${sidebarBorder}`}
       >
-        {/* Logo */}
+        {/* Logo Section */}
         <div
-          style={{
-            padding: "1.25rem",
-            borderBottom: "1px solid " + (isDark ? "#334155" : "#e2e8f0"),
-          }}
+          className={`px-6 py-5 border-b smooth-transition ${sidebarBorder}`}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <div className="flex items-center gap-3">
             <div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
               style={{
-                width: "2rem",
-                height: "2rem",
-                backgroundColor: "#4f46e5",
-                borderRadius: "0.5rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                background: `linear-gradient(135deg, ${accentColor}80, ${accentColor})`,
+                boxShadow: `0 4px 12px ${accentColor}30`,
               }}
             >
               <ShieldExclamationIcon
-                style={{ width: "1.25rem", height: "1.25rem", color: "white" }}
+                style={{ width: "1.5rem", height: "1.5rem", color: "white" }}
               />
             </div>
             <div>
-              <p
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "0.875rem",
-                  lineHeight: "1",
-                  color: isDark ? "#f1f5f9" : "#0f172a",
-                }}
-              >
+              <p className={`font-bold text-sm leading-none ${textPrimary}`}>
                 VulnRisk
               </p>
-              <p style={{ color: "#64748b", fontSize: "0.75rem" }}>
-                Prioritization System
+              <p className={`text-xs mt-1 ${textSecondary}`}>
+                Risk Prioritization
               </p>
             </div>
           </div>
         </div>
 
-        {/* Nav */}
-        <nav
-          style={{
-            flex: 1,
-            padding: "0.75rem",
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.25rem",
-          }}
-        >
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1 overflow-y-auto">
           {NAV.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               end={to === "/"}
-              style={({ isActive }) => ({
-                display: "flex",
-                alignItems: "center",
-                gap: "0.75rem",
-                padding: "0.625rem 0.75rem",
-                borderRadius: "0.5rem",
-                fontSize: "0.875rem",
-                fontWeight: "500",
-                textDecoration: "none",
-                transition: "all 0.2s",
-                color: isActive ? "#a5b4fc" : isDark ? "#64748b" : "#64748b",
-                backgroundColor: isActive
-                  ? "rgba(79, 70, 229, 0.2)"
-                  : "transparent",
-                border: isActive ? "1px solid rgba(79, 70, 229, 0.3)" : "none",
-              })}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium smooth-transition ${
+                  isActive
+                    ? isDark
+                      ? "bg-primary-600/20 text-primary-400 border border-primary-600/30 shadow-md shadow-primary-600/10"
+                      : "bg-primary-50 text-primary-700 border border-primary-200 shadow-sm"
+                    : isDark
+                      ? `${textSecondary} hover:bg-slate-800/50 hover:${textPrimary}`
+                      : `${textSecondary} hover:bg-slate-100 hover:${textPrimary}`
+                }`
+              }
             >
-              <Icon style={{ width: "1rem", height: "1rem", flexShrink: 0 }} />
-              {label}
+              <Icon className="w-5 h-5 shrink-0" />
+              <span>{label}</span>
             </NavLink>
           ))}
         </nav>
 
-        {/* Bottom status */}
-        <div
-          style={{
-            padding: "0.75rem",
-            borderTop: "1px solid " + (isDark ? "#334155" : "#e2e8f0"),
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
+        {/* Status Section */}
+        <div className={`px-4 py-4 space-y-3 border-t ${sidebarBorder}`}>
           {session && (
             <div
-              style={{
-                borderRadius: "0.5rem",
-                padding: "0.625rem",
-                fontSize: "0.75rem",
-                backgroundColor: isDark ? "rgba(15, 23, 42, 0.5)" : "#f1f5f9",
-              }}
+              className={`rounded-lg p-3 backdrop-blur-sm smooth-transition ${
+                isDark
+                  ? "bg-slate-800/50 border border-slate-700/30"
+                  : "bg-slate-100/50 border border-slate-200/50"
+              }`}
             >
-              <p style={{ color: "#64748b" }}>Last scan</p>
-              <p style={{ color: "#10b981", fontWeight: "600" }}>
-                {session.total_after_dedup} findings
+              <p className={`text-xs font-semibold ${textSecondary}`}>
+                LAST SCAN
               </p>
-              <p style={{ color: "#64748b" }}>
-                {session.tools_detected?.join(", ")}
+              <p
+                className="text-lg font-bold mt-1"
+                style={{
+                  background: "linear-gradient(135deg, #10b981, #34d399)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {session.total_after_dedup}
+              </p>
+              <p className={`text-xs ${textSecondary} mt-0.5`}>
+                {session.tools_detected?.slice(0, 2)?.join(", ")}
               </p>
             </div>
           )}
+
           {githubUsername && (
             <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.375rem 0.5rem",
-              }}
+              className={`flex items-center gap-2 px-2 py-2 rounded-lg ${isDark ? "bg-slate-800/30" : "bg-slate-100/30"}`}
             >
-              <div
-                style={{
-                  width: "0.5rem",
-                  height: "0.5rem",
-                  borderRadius: "50%",
-                  backgroundColor: "#10b981",
-                }}
-              />
-              <p
-                style={{
-                  color: "#64748b",
-                  fontSize: "0.75rem",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <p className={`text-xs truncate ${textSecondary}`}>
                 {githubUsername}
               </p>
             </div>
@@ -185,20 +137,20 @@ export function Layout({ children }) {
         </div>
       </aside>
 
-      {/* Main */}
-      <main
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          position: "relative",
-          backgroundColor: isDark ? "#0f172a" : "#f8fafc",
-        }}
-      >
-        <div style={{ maxWidth: "80rem", margin: "0 auto", padding: "1.5rem" }}>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto relative">
+        <Box
+          sx={{
+            maxWidth: "1400px",
+            margin: "0 auto",
+            padding: "2rem 1.5rem",
+            minHeight: "100%",
+          }}
+        >
           {children}
-        </div>
+        </Box>
 
-        {/* Dark / Light Mode Toggle — fixed bottom-right FAB */}
+        {/* Theme Toggle FAB */}
         <Tooltip
           title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
           placement="left"
@@ -208,13 +160,26 @@ export function Layout({ children }) {
             size="medium"
             sx={{
               position: "fixed",
-              bottom: 28,
-              right: 28,
+              bottom: 32,
+              right: 32,
               zIndex: 1300,
-              bgcolor: isDark ? "#6366f1" : "#4f46e5",
+              background: isDark
+                ? "linear-gradient(135deg, #5844ff, #7c6fff)"
+                : "linear-gradient(135deg, #5844ff, #4830e6)",
               color: "#fff",
-              "&:hover": { bgcolor: isDark ? "#4f46e5" : "#3730a3" },
-              boxShadow: "0 4px 20px rgba(99,102,241,0.5)",
+              boxShadow: isDark
+                ? "0 8px 24px rgba(88, 68, 255, 0.3)"
+                : "0 8px 24px rgba(88, 68, 255, 0.2)",
+              transition: "all 0.3s ease-out",
+              "&:hover": {
+                transform: "scale(1.1)",
+                boxShadow: isDark
+                  ? "0 12px 32px rgba(88, 68, 255, 0.4)"
+                  : "0 12px 32px rgba(88, 68, 255, 0.3)",
+              },
+              "&:active": {
+                transform: "scale(0.95)",
+              },
             }}
           >
             {isDark ? <LightModeIcon /> : <DarkModeIcon />}
