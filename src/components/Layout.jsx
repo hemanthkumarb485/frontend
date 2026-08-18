@@ -71,22 +71,22 @@ export function Layout({ children }) {
       >
         {/* Logo Section */}
         <div className="px-6 py-6 border-b flex items-center justify-between gap-4" style={{ borderColor: sidebarBorder }}>
-          <Link to="/" className="flex items-center gap-3 hover:opacity-85 transition-opacity">
+          <Link to="/" className="flex items-center gap-4 hover:opacity-85 transition-opacity">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="1.6"
               stroke="var(--foreground)"
-              className="w-8 h-8 shrink-0 logo-glow-blink"
+              className="w-10 h-10 shrink-0 logo-glow-blink"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
             </svg>
-            <div>
-              <p className="font-extrabold text-[19px] tracking-tight leading-none" style={{ color: textPrimary }}>
+            <div className="flex flex-col justify-center">
+              <p className="font-extrabold text-[20px] tracking-tight leading-tight" style={{ color: textPrimary }}>
                 VulneraX
               </p>
-              <p className="text-[10px] mt-1.5 font-semibold uppercase tracking-[0.14em]" style={{ color: textSecondary }}>
+              <p className="text-[10px] mt-1 font-semibold uppercase tracking-[0.14em] leading-none" style={{ color: textSecondary }}>
                 Risk Prioritization
               </p>
             </div>

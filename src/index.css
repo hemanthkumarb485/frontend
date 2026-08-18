@@ -67,6 +67,7 @@
 
   --glow-color: rgba(9, 9, 11, 0.15);
   --glow-color-solid: #18181b;
+  --logo-glow: transparent;
 }
 
 html.dark {
@@ -114,6 +115,7 @@ html.dark {
 
   --glow-color: rgba(255, 255, 255, 0.25);
   --glow-color-solid: #fafafa;
+  --logo-glow: #fafafa;
 }
 
 html {
@@ -267,11 +269,11 @@ html.dark .glow-box:hover {
 
 @keyframes logoGlowBlink {
   0%, 100% {
-    filter: drop-shadow(0 0 2px var(--glow-color));
+    filter: drop-shadow(0 0 2px var(--logo-glow));
     opacity: 0.8;
   }
   50% {
-    filter: drop-shadow(0 0 10px var(--glow-color-solid));
+    filter: drop-shadow(0 0 10px var(--logo-glow));
     opacity: 1;
   }
 }
