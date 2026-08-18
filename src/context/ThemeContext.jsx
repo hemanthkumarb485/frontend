@@ -76,8 +76,8 @@ export function ThemeProvider({ children }) {
                 error: { main: "#ef4444", light: "#fee2e2", dark: "#7f1d1d" },
                 info: { main: "#0284c7", light: "#e0f2fe", dark: "#0369a1" },
                 background: {
-                  default: "#ffffff", // Pure white
-                  paper: "#ffffff",
+                  default: "#f4f4f5", // Soft zinc-100 canvas
+                  paper: "#ffffff", // White surfaces for depth
                 },
                 text: {
                   primary: "#09090b", // Zinc-950

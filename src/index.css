@@ -31,13 +31,13 @@
   --secondary-600: #f4f4f5;
   --secondary-700: #e4e4e7;
 
-  --background: #ffffff;
+  --background: #f4f4f5;
   --foreground: #09090b;
   --surface: #ffffff;
-  --surface-2: #f4f4f5;
-  --muted: #f4f4f5;
+  --surface-2: #fafafa;
+  --muted: #e4e4e7;
   --muted-foreground: #71717a;
-  --accent: #f4f4f5;
+  --accent: #e4e4e7;
   --accent-foreground: #18181b;
   --destructive: #ef4444;
   --border: #e4e4e7;
@@ -117,9 +117,9 @@ html.dark {
 }
 
 html {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f4f4f5;
-  --bg-tertiary: #fafafc;
+  --bg-primary: #f4f4f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #fafafa;
   --text-primary: #09090b;
   --text-secondary: #71717a;
   --text-tertiary: #a1a1aa;
@@ -132,7 +132,8 @@ html {
   }
 
   html {
-    @apply bg-white text-[#09090b];
+    background-color: var(--background);
+    color: var(--foreground);
     font-family:
       "Inter",
       -apple-system,
@@ -144,16 +145,20 @@ html {
   }
 
   html.dark {
-    @apply bg-[#09090b] text-[#fafafa];
+    background-color: var(--background);
+    color: var(--foreground);
     color-scheme: dark;
   }
 
   body {
-    @apply bg-white text-[#09090b] antialiased;
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply antialiased;
   }
 
   body.dark {
-    @apply bg-[#09090b] text-[#fafafa];
+    background-color: var(--background);
+    color: var(--foreground);
   }
 
   h1,
@@ -256,4 +261,33 @@ html.dark .glow-box {
 
 html.dark .glow-box:hover {
   border-color: var(--primary-500) !important;
+}
+
+@keyframes logoHeartbeat {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px var(--glow-color));
+  }
+  14% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 8px var(--glow-color-solid));
+  }
+  28% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px var(--glow-color));
+  }
+  42% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 8px var(--glow-color-solid));
+  }
+  70% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px var(--glow-color));
+  }
+}
+
+.logo-heartbeat {
+  animation: logoHeartbeat 2.8s infinite ease-in-out;
+  transform-origin: center;
+  display: inline-block;
 }

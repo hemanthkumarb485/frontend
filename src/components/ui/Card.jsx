@@ -4,7 +4,7 @@ export function Card({ children, className }) {
   return (
     <div
       className={clsx(
-        "rounded-lg bg-[var(--surface)] p-4 sm:p-6 border border-[var(--border)] smooth-transition",
+        "rounded-lg bg-[var(--surface)] p-4 sm:p-6 border border-[var(--border)] glow-box smooth-transition",
         className,
       )}
     >

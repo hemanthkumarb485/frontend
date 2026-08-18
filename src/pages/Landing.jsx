@@ -51,7 +51,7 @@ function TypingCodeBlock({ code, delay = 0, speed = 25 }) {
     return lines.map((line, idx) => {
       if (line.startsWith("#")) {
         return (
-          <div key={idx} className="text-zinc-500 dark:text-zinc-400 italic">
+          <div key={idx} className="text-[var(--muted-foreground)] italic font-mono">
             {line}
           </div>
         );
@@ -59,15 +59,15 @@ function TypingCodeBlock({ code, delay = 0, speed = 25 }) {
       if (line.includes("vulnerax")) {
         const parts = line.split("vulnerax");
         return (
-          <div key={idx} className="text-zinc-900 dark:text-zinc-100">
+          <div key={idx} className="font-mono text-[var(--foreground)]">
             {parts[0]}
-            <span className="text-zinc-900 dark:text-zinc-100 font-bold">vulnerax</span>
+            <span className="font-bold text-[var(--foreground)]">vulnerax</span>
             {parts[1]}
           </div>
         );
       }
 
-      return <div key={idx} className="font-mono text-zinc-900 dark:text-zinc-100">{line}</div>;
+      return <div key={idx} className="font-mono text-[var(--foreground)]">{line}</div>;
     });
   };
 
@@ -75,7 +75,7 @@ function TypingCodeBlock({ code, delay = 0, speed = 25 }) {
     <pre className="mono overflow-x-auto p-4 text-[12.5px] leading-relaxed bg-[var(--background)]/50 min-h-[96px] relative flex flex-col justify-center">
       <div>
         {renderHighlighted(displayedText)}
-        <span className={`inline-block w-1.5 h-4 ml-0.5 bg-[var(--foreground)] align-middle ${isTypingComplete ? "animate-pulse" : "animate-ping"}`} />
+        <span className="inline-block w-1.5 h-4 ml-0.5 bg-[var(--foreground)] align-middle cursor-blink" />
       </div>
     </pre>
   );
@@ -124,6 +124,13 @@ export default function Landing() {
             filter: drop-shadow(0 0 8px var(--glow-color));
           }
         }
+        @keyframes cursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .cursor-blink {
+          animation: cursorBlink 1.1s infinite step-end;
+        }
       `}</style>
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[var(--border)]/60 bg-[var(--background)]/80 backdrop-blur-md">
@@ -135,8 +142,7 @@ export default function Landing() {
               viewBox="0 0 24 24"
               strokeWidth="1.6"
               stroke="var(--foreground)"
-              style={{ filter: "drop-shadow(0 0 6px var(--glow-color))" }}
-              className="w-6 h-6 shrink-0"
+              className="w-6 h-6 shrink-0 logo-heartbeat"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
             </svg>
@@ -157,7 +163,7 @@ export default function Landing() {
             >
               Threat Intel
             </Link>
-            
+
             {/* Theme Toggler */}
             <button
               onClick={toggleTheme}
@@ -181,27 +187,27 @@ export default function Landing() {
       <section className="relative overflow-hidden flex-1 flex flex-col items-center justify-center py-20 sm:py-32">
         <div className="pointer-events-none absolute inset-0 grid-fade" style={gridStyle} />
         <div className="pointer-events-none absolute inset-0" style={radialStyle} />
-        
+
         <div className="relative mx-auto max-w-4xl px-5 text-center flex flex-col items-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--accent)] px-3.5 py-1 text-xs text-[var(--muted-foreground)] font-medium mb-6">
             <Zap className="w-3.5 h-3.5 text-[var(--foreground)]" />
             KEV · EPSS · CVSS Risk Fusion
           </span>
-          
+
           <h1 className="text-4xl font-bold leading-[1.15] tracking-tight sm:text-5xl md:text-6xl text-[var(--foreground)]">
             Vulnerability Risk Prioritization
           </h1>
-          
+
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">
             Ingest every scanner, remove duplicate noise, enrich with live threat intelligence, and rank exactly what your team should fix first.
           </p>
-          
+
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/dashboard"
               className="inline-flex items-center justify-center whitespace-nowrap font-medium cursor-pointer transition-all bg-[var(--primary-600)] hover:bg-[var(--primary-600)]/90 text-[var(--primary-foreground)] rounded-md h-10 gap-2.5 px-6 text-sm"
             >
-              Open Dashboard 
+              Open Dashboard
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
@@ -222,18 +228,18 @@ export default function Landing() {
         <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--muted-foreground)]">
           A six-stage pipeline that turns raw scanner output into a defensible remediation order.
         </p>
-        
+
         <div className="mt-12 flex flex-col lg:flex-row lg:items-stretch justify-between gap-4">
           {/* Card 1 */}
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "0s" }}
               />
-              <ScanLine 
-                className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <ScanLine
+                className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "0s" }}
               />
             </div>
@@ -252,12 +258,12 @@ export default function Landing() {
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "1s" }}
               />
-              <Layers 
-                className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <Layers
+                className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "1s" }}
               />
             </div>
@@ -276,12 +282,12 @@ export default function Landing() {
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "2s" }}
               />
-              <Copy 
-                className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <Copy
+                className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "2s" }}
               />
             </div>
@@ -300,11 +306,11 @@ export default function Landing() {
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "3s" }}
               />
-              <Radar className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <Radar className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "3s" }}
               />
             </div>
@@ -323,11 +329,11 @@ export default function Landing() {
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "4s" }}
               />
-              <Gauge className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <Gauge className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "4s" }}
               />
             </div>
@@ -346,11 +352,11 @@ export default function Landing() {
           <div className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-5 text-center hover:border-zinc-400 dark:hover:border-zinc-600 transition-all duration-200 group flex flex-col items-center justify-start">
             <div className="relative size-12 mb-4 shrink-0 flex items-center justify-center">
               <div className="absolute inset-0 rounded-md border border-[var(--border)] bg-[var(--accent)] transition-all duration-300" />
-              <div 
+              <div
                 className="absolute inset-0 rounded-md border border-[var(--glow-color-solid)]/40 bg-[var(--glow-color-solid)]/5 shadow-[0_0_12px_var(--glow-color)]"
                 style={{ animation: "alternatingOpacity 6s infinite ease-in-out", animationDelay: "5s" }}
               />
-              <Ticket className="relative z-10 w-5 h-5 text-[var(--foreground)]" 
+              <Ticket className="relative z-10 w-5 h-5 text-[var(--foreground)]"
                 style={{ animation: "alternatingSvgGlow 6s infinite ease-in-out", animationDelay: "5s" }}
               />
             </div>
@@ -371,7 +377,7 @@ export default function Landing() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-sm text-[var(--muted-foreground)]">
             Built on the signals SOC and vulnerability-management teams actually act on.
           </p>
-          
+
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {/* Card 1 */}
             <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-6 hover:border-zinc-400 dark:hover:border-zinc-600 transition-colors">
@@ -429,7 +435,7 @@ export default function Landing() {
           <p className="mt-4 text-sm text-[var(--muted-foreground)] leading-relaxed">
             VulneraX normalizes output from the tools you already run, so risk ranking works on day one — no rip-and-replace.
           </p>
-          
+
           <ul className="mt-7 space-y-4">
             <li className="flex items-center gap-3 text-sm text-[var(--foreground)] font-semibold">
               <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -461,10 +467,10 @@ export default function Landing() {
               <span className="text-[12.5px] font-semibold text-[var(--foreground)]">Scanner Ingestion</span>
               <span className="mono text-[10.5px] text-[var(--muted-foreground)]">bash</span>
             </div>
-            <TypingCodeBlock 
+            <TypingCodeBlock
               code={`# Pull raw findings from every scanner
 vulnerax ingest --source zap --file zap-report.json
-vulnerax ingest --source nuclei --file nuclei.jsonl`} 
+vulnerax ingest --source nuclei --file nuclei.jsonl`}
               delay={0}
               speed={20}
             />
@@ -476,10 +482,10 @@ vulnerax ingest --source nuclei --file nuclei.jsonl`}
               <span className="text-[12.5px] font-semibold text-[var(--foreground)]">Deduplication</span>
               <span className="mono text-[10.5px] text-[var(--muted-foreground)]">bash</span>
             </div>
-            <TypingCodeBlock 
+            <TypingCodeBlock
               code={`# Fingerprint on cve + asset + port + template
 vulnerax dedup --strategy fingerprint \\
-  --window 30d --merge-evidence`} 
+  --window 30d --merge-evidence`}
               delay={3200}
               speed={20}
             />
@@ -491,10 +497,10 @@ vulnerax dedup --strategy fingerprint \\
               <span className="text-[12.5px] font-semibold text-[var(--foreground)]">Risk Scoring</span>
               <span className="mono text-[10.5px] text-[var(--muted-foreground)]">python</span>
             </div>
-            <TypingCodeBlock 
+            <TypingCodeBlock
               code={`score = (0.35 * cvss_norm + 0.30 * epss
-         + 0.20 * kev_flag + 0.15 * asset_criticality)
-rank = sorted(findings, key=score, reverse=True)`} 
+          + 0.20 * kev_flag + 0.15 * asset_criticality)
+rank = sorted(findings, key=score, reverse=True)`}
               delay={6400}
               speed={20}
             />
@@ -516,7 +522,7 @@ rank = sorted(findings, key=score, reverse=True)`}
             to="/dashboard"
             className="inline-flex items-center justify-center whitespace-nowrap font-medium cursor-pointer transition-all bg-[var(--primary-600)] hover:bg-[var(--primary-600)]/90 text-[var(--primary-foreground)] rounded-md mt-8 h-10 gap-2 px-6 text-sm"
           >
-            Open Dashboard 
+            Open Dashboard
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
