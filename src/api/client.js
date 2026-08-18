@@ -98,9 +98,6 @@ export async function uploadScansSync(files) {
   return res.data
 }
 
-export async function getGithubOAuthUrl() {
-  const res = await api.get('/github/login'); return res.data
-}
 export async function connectGithubPAT(pat) {
   const res = await api.post('/github/connect-pat', { pat }); return res.data
 }

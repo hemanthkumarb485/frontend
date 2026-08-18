@@ -5,7 +5,6 @@ import { useTheme } from "../context/ThemeContext";
 import { FindingCard } from "../components/FindingCard";
 import { PageHeader } from "../components/ui/PageHeader";
 import {
-  getGithubOAuthUrl,
   getGithubRepos,
   createGithubIssue,
 } from "../api/client";

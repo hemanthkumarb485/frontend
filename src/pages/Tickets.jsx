@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useScan } from '../context/ScanContext'
 import { useTheme } from '../context/ThemeContext'
-import { getGithubOAuthUrl, connectGithubPAT, getGithubRepos, createGithubIssue } from '../api/client'
+import { getGithubRepos, connectGithubPAT, createGithubIssue } from '../api/client'
 import { TierBadge } from '../components/ui/Badge'
 import { PageHeader } from '../components/ui/PageHeader'
 import { fmtScore } from '../utils/helpers'
-import { Chip, Button, Alert, CircularProgress, Select, MenuItem, TextField, Tab, Tabs, Box } from '@mui/material'
-import { CheckCircle as CheckCircleIcon, GitHub as GitHubIcon, Key as KeyIcon, Refresh as RefreshIcon, Logout as LogoutIcon } from '@mui/icons-material'
+import { Chip, Button, Alert, CircularProgress, Select, MenuItem, TextField } from '@mui/material'
+import { CheckCircle as CheckCircleIcon, Key as KeyIcon, Refresh as RefreshIcon, Logout as LogoutIcon } from '@mui/icons-material'
 
 export default function Tickets() {
   const { session, githubToken, githubUsername, selectedRepo,
@@ -17,7 +17,6 @@ export default function Tickets() {
   const [reposLoaded, setReposLoaded] = useState(false)
   const [creating, setCreating]       = useState(null)
   const [err, setErr]                 = useState(null)
-  const [connectTab, setConnectTab]   = useState('pat')
   const [pat, setPat]                 = useState('')
   const [connectingPat, setConnectingPat] = useState(false)
   const [warning, setWarning]         = useState(null)
@@ -25,32 +24,6 @@ export default function Tickets() {
 
   const findings = session?.findings || []
   const p0p1 = findings.filter(f => ['P0','P1'].includes(f.risk_score?.priority_tier))
-
-  useEffect(() => {
-    const handleOAuthMessage = (event) => {
-      if (event.data && event.data.type === 'github-connected') {
-        const { encrypted_token, github_username } = event.data
-        saveGithubConnection(encrypted_token, github_username)
-        setErr(null)
-        setWarning(null)
-        setReconnecting(false)
-        setRepos([])
-        setReposLoaded(false)
-      }
-    }
-    window.addEventListener('message', handleOAuthMessage)
-    return () => window.removeEventListener('message', handleOAuthMessage)
-  }, [saveGithubConnection])
-
-  const connectOAuth = async () => {
-    try {
-      setErr(null)
-      const { oauth_url } = await getGithubOAuthUrl()
-      window.open(oauth_url, '_blank', 'width=600,height=700')
-    } catch (e) {
-      setErr('OAuth failed: ' + (e.response?.data?.detail || e.message))
-    }
-  }
 
   const connectWithPAT = async () => {
     if (!pat.trim()) {
@@ -174,10 +147,6 @@ export default function Tickets() {
                   </Button>
                 </div>
                 <p className="text-[var(--muted-foreground)] text-xs">Fine-grained: <strong>Issues: Read and write</strong> on the repo · Classic: <strong>repo</strong> scope.</p>
-                <Button variant="outlined" size="small" startIcon={<GitHubIcon style={{fontSize:14}}/>} onClick={connectOAuth}
-                  sx={{fontSize:'0.7rem',borderColor:'#24292f',color:'#e2e8f0',textTransform:'none','&:hover':{bgcolor:'#30363d'}}}>
-                  Or reconnect via GitHub OAuth
-                </Button>
               </div>
             )}
 
@@ -200,67 +169,41 @@ export default function Tickets() {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            <Box sx={{ borderBottom: 1, borderColor: 'var(--border)' }}>
-              <Tabs value={connectTab} onChange={(e, val) => setConnectTab(val)}
+          <div className="space-y-3 max-w-md">
+            <p className="text-[var(--muted-foreground)] text-xs">
+              Generate a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="text-primary-400 underline">github.com/settings/tokens</a> with one of:
+            </p>
+            <ul className="text-[var(--muted-foreground)] text-xs list-disc pl-4 space-y-1">
+              <li><strong className="text-[var(--foreground)]">Fine-grained token</strong> → Repository permissions → <strong>Issues: Read and write</strong>, selected on the target repo.</li>
+              <li><strong className="text-[var(--foreground)]">Classic token</strong> → <code className="text-primary-300">repo</code> scope (<code className="text-primary-300">public_repo</code> for public repos only).</li>
+            </ul>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <TextField
+                type="password"
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                size="small"
+                value={pat}
+                onChange={e => setPat(e.target.value)}
                 sx={{
-                  '.MuiTab-root': { color: 'var(--muted-foreground)', textTransform: 'none', fontWeight: 600 },
-                  '.Mui-selected': { color: '#3b82f6 !important' },
-                  '.MuiTabs-indicator': { bgcolor: '#2563eb' }
-                }}>
-                <Tab label="Personal Access Token (PAT)" value="pat" />
-                <Tab label="GitHub OAuth" value="oauth" />
-              </Tabs>
-            </Box>
-
-            {connectTab === 'pat' ? (
-              <div className="space-y-3 max-w-md">
-                <p className="text-[var(--muted-foreground)] text-xs">
-                  Generate a token at <a href="https://github.com/settings/tokens" target="_blank" rel="noreferrer" className="text-primary-400 underline">github.com/settings/tokens</a> with one of:
-                </p>
-                <ul className="text-[var(--muted-foreground)] text-xs list-disc pl-4 space-y-1">
-                  <li><strong className="text-[var(--foreground)]">Fine-grained token</strong> → Repository permissions → <strong>Issues: Read and write</strong>, selected on the target repo.</li>
-                  <li><strong className="text-[var(--foreground)]">Classic token</strong> → <code className="text-primary-300">repo</code> scope (<code className="text-primary-300">public_repo</code> for public repos only).</li>
-                </ul>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <TextField
-                    type="password"
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    size="small"
-                    value={pat}
-                    onChange={e => setPat(e.target.value)}
-                    sx={{
-                      input: { color: 'var(--foreground)' },
-                      '.MuiOutlinedInput-root': {
-                        bgcolor: 'var(--surface-2)',
-                        '.MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
-                        '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--muted-foreground)' }
-                      }
-                    }}
-                    fullWidth
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={connectWithPAT}
-                    disabled={connectingPat}
-                    startIcon={connectingPat ? <CircularProgress size={16} color="inherit" /> : <KeyIcon />}
-                    sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', fontWeight: 600, px: 3, whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
-                  >
-                    {connectingPat ? 'Connecting...' : 'Connect PAT'}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <p className="text-[var(--muted-foreground)] text-xs max-w-lg">
-                  Authenticates via GitHub's OAuth system. Requires a registered Client ID and Secret in backend environment variables.
-                </p>
-                <Button variant="contained" startIcon={<GitHubIcon/>} onClick={connectOAuth}
-                  sx={{bgcolor:'#24292f','&:hover':{bgcolor:'#30363d'},textTransform:'none',fontWeight:700}}>
-                  Connect via GitHub OAuth
-                </Button>
-              </div>
-            )}
+                  input: { color: 'var(--foreground)' },
+                  '.MuiOutlinedInput-root': {
+                    bgcolor: 'var(--surface-2)',
+                    '.MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border)' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--muted-foreground)' }
+                  }
+                }}
+                fullWidth
+              />
+              <Button
+                variant="contained"
+                onClick={connectWithPAT}
+                disabled={connectingPat}
+                startIcon={connectingPat ? <CircularProgress size={16} color="inherit" /> : <KeyIcon />}
+                sx={{ bgcolor: '#2563eb', '&:hover': { bgcolor: '#1d4ed8' }, textTransform: 'none', fontWeight: 600, px: 3, whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
+              >
+                {connectingPat ? 'Connecting...' : 'Connect PAT'}
+              </Button>
+            </div>
           </div>
         )}
       </div>
