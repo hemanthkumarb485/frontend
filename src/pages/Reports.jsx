@@ -2,10 +2,14 @@ import { useState } from "react";
 import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
 import { exportJSON, exportPDF } from "../api/client";
-import { DocumentArrowDownIcon } from "@heroicons/react/24/outline";
+import {
+  DocumentArrowDownIcon,
+  DocumentTextIcon,
+} from "@heroicons/react/24/outline";
 import { getTierCounts } from "../utils/helpers";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { PageHeader } from "../components/ui/PageHeader";
 import { useNavigate } from "react-router-dom";
 import { Alert, CircularProgress } from "@mui/material";
 
@@ -21,16 +25,14 @@ export default function Reports() {
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p
-          className={`text-base ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
+        <p className="text-[13px] text-[var(--muted-foreground)]">
           No scan data. Upload first.
         </p>
         <button
           onClick={() => navigate("/upload")}
-          className="px-6 py-2 bg-linear-to-r from-primary-600 to-primary-700 text-white rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all"
+          className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium transition-all"
         >
-          📤 Upload Scans
+          Upload Scans
         </button>
       </div>
     );
@@ -45,10 +47,10 @@ export default function Reports() {
       if (type === "json") await exportJSON(session);
       else await exportPDF(session);
       setMsgType("success");
-      setMsg(`✅ ${type.toUpperCase()} downloaded successfully!`);
+      setMsg(`${type.toUpperCase()} downloaded successfully!`);
     } catch (e) {
       setMsgType("error");
-      setMsg(`❌ Export failed: ${e.message}`);
+      setMsg(`Export failed: ${e.message}`);
     } finally {
       setLoading(null);
     }
@@ -56,19 +58,10 @@ export default function Reports() {
 
   return (
     <div className="max-w-4xl space-y-8">
-      {/* Header */}
-      <div>
-        <h1
-          className={`text-3xl font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}
-        >
-          Reports & Export
-        </h1>
-        <p
-          className={`text-base mt-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
-          Download the current scan session as JSON or PDF report.
-        </p>
-      </div>
+      <PageHeader
+        title="Reports & Export"
+        subtitle="Download the current scan session as JSON or PDF report."
+      />
 
       {/* Session Summary */}
       <Card>
@@ -78,7 +71,7 @@ export default function Reports() {
         />
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
           {[
-            ["Session ID", session.session_id?.slice(0, 12) + "…"],
+            ["Session ID", session.session_id?.slice(0, 12) + "\u2026"],
             ["Tools Used", session.tools_detected?.join(", ")],
             ["Total Findings", session.total_after_dedup],
             ["Scored Findings", session.total_scored],
@@ -87,23 +80,19 @@ export default function Reports() {
               "Processing Time",
               session.processing_time_seconds
                 ? session.processing_time_seconds.toFixed(1) + "s"
-                : "—",
+                : "\u2014",
             ],
-            ["🔴 P0 Critical", tierCounts.P0],
-            ["🟠 P1 High", tierCounts.P1],
-            ["🟡 P2 Medium", tierCounts.P2],
-            ["🟢 P3 Low", tierCounts.P3],
+            ["P0 Critical", tierCounts.P0],
+            ["P1 High", tierCounts.P1],
+            ["P2 Medium", tierCounts.P2],
+            ["P3 Low", tierCounts.P3],
           ].map(([k, v]) => (
             <div key={k}>
-              <p
-                className={`text-xs font-semibold uppercase tracking-wide mb-1 ${isDark ? "text-slate-500" : "text-slate-600"}`}
-              >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-1 text-[var(--muted-foreground)]">
                 {k}
               </p>
-              <p
-                className={`text-sm font-bold ${isDark ? "text-slate-200" : "text-slate-900"}`}
-              >
-                {String(v ?? "—")}
+              <p className="text-sm font-bold text-[var(--foreground)]">
+                {String(v ?? "\u2014")}
               </p>
             </div>
           ))}
@@ -154,19 +143,15 @@ export default function Reports() {
         <Card>
           <div className="flex items-start gap-4 mb-4">
             <div
-              className={`p-3 rounded-lg flex-shrink-0 ${isDark ? "bg-blue-600/20 text-blue-400" : "bg-blue-100 text-blue-600"}`}
+              className="grid size-11 shrink-0 place-items-center rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-400 shadow-[0_0_12px_rgba(168,85,247,0.25)]"
             >
-              <DocumentArrowDownIcon className="w-6 h-6" />
+              <DocumentArrowDownIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(168,85,247,0.4)]" />
             </div>
             <div className="flex-1">
-              <h3
-                className={`font-bold text-lg ${isDark ? "text-slate-200" : "text-slate-900"}`}
-              >
+              <h3 className="font-bold text-[15px] text-[var(--foreground)]">
                 JSON Export
               </h3>
-              <p
-                className={`text-sm mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-              >
+              <p className="text-[12.5px] mt-1 text-[var(--muted-foreground)]">
                 Full structured data in JSON format — ideal for programmatic
                 processing and integrations.
               </p>
@@ -185,10 +170,7 @@ export default function Reports() {
                 <span>Generating...</span>
               </>
             ) : (
-              <>
-                <span>⬇️</span>
-                <span>Download JSON</span>
-              </>
+              <span>Download JSON</span>
             )}
           </Button>
         </Card>
@@ -197,19 +179,19 @@ export default function Reports() {
         <Card>
           <div className="flex items-start gap-4 mb-4">
             <div
-              className={`p-3 rounded-lg flex-shrink-0 ${isDark ? "bg-red-600/20 text-red-400" : "bg-red-100 text-red-600"}`}
+              className="grid size-11 shrink-0 place-items-center rounded-lg"
+              style={{
+                color: "var(--sev-critical)",
+                background: "color-mix(in oklab, var(--sev-critical) 14%, transparent)",
+              }}
             >
-              <DocumentArrowDownIcon className="w-6 h-6" />
+              <DocumentTextIcon className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <h3
-                className={`font-bold text-lg ${isDark ? "text-slate-200" : "text-slate-900"}`}
-              >
+              <h3 className="font-bold text-[15px] text-[var(--foreground)]">
                 PDF Report
               </h3>
-              <p
-                className={`text-sm mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-              >
+              <p className="text-[12.5px] mt-1 text-[var(--muted-foreground)]">
                 Professional formatted report with risk breakdown (top 100
                 findings included).
               </p>
@@ -228,10 +210,7 @@ export default function Reports() {
                 <span>Generating...</span>
               </>
             ) : (
-              <>
-                <span>📄</span>
-                <span>Download PDF</span>
-              </>
+              <span>Download PDF</span>
             )}
           </Button>
         </Card>
@@ -239,12 +218,11 @@ export default function Reports() {
 
       {/* Footer Note */}
       <div
-        className={`p-4 rounded-lg border ${isDark ? "bg-slate-900/30 border-slate-800/50" : "bg-slate-50 border-slate-200"}`}
+        className="p-4 rounded-lg glow-box smooth-transition"
+        style={{ background: "var(--surface)" }}
       >
-        <p
-          className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
-          💡 <span className="font-medium">Pro Tip:</span> JSON exports are
+        <p className="text-[13px] text-[var(--muted-foreground)]">
+          <span className="font-medium">Pro Tip:</span> JSON exports are
           perfect for API integrations and bulk processing, while PDF reports
           are ideal for stakeholder communication and compliance documentation.
         </p>

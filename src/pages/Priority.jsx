@@ -2,7 +2,9 @@ import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
 import { getTierCounts, fmtScore, TIER_CONFIG } from "../utils/helpers";
 import { TierBadge, SeverityBadge, ToolBadge } from "../components/ui/Badge";
+import { RiskScorePill } from "../components/ui/RiskScorePill";
 import { Card, CardHeader } from "../components/ui/Card";
+import { PageHeader } from "../components/ui/PageHeader";
 import { useNavigate } from "react-router-dom";
 
 export default function Priority() {
@@ -14,16 +16,14 @@ export default function Priority() {
   if (!session) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p
-          className={`text-base ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
+        <p className="text-[13px] text-[var(--muted-foreground)]">
           No scan data. Upload first.
         </p>
         <button
           onClick={() => navigate("/upload")}
-          className="px-6 py-2 bg-linear-to-r from-primary-600 to-primary-700 text-white rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all"
+          className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium transition-all"
         >
-          📤 Upload Scans
+          Upload Scans
         </button>
       </div>
     );
@@ -38,52 +38,35 @@ export default function Priority() {
     grouped[t]?.push(f);
   });
 
+  const tierColorMap = {
+    P0: "var(--tier-p1)",
+    P1: "var(--tier-p1)",
+    P2: "var(--tier-p2)",
+    P3: "var(--tier-p3)",
+    UNSCORED: "var(--sev-info)",
+  };
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1
-          className={`text-3xl font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}
-        >
-          Risk & Priority
-        </h1>
-        <p
-          className={`text-base mt-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
-          Findings sorted by composite risk score (0–100). Higher scores
-          indicate greater urgency.
-        </p>
-      </div>
+      <PageHeader
+        title="Risk & Priority"
+        subtitle="Findings sorted by composite risk score (0-100). Higher scores indicate greater urgency."
+      />
 
       {/* Tier Summary Cards */}
-      <div className="grid grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {Object.entries(TIER_CONFIG).map(([tier, cfg]) => (
           <Card key={tier} className="text-center">
-            <p
-              className={`text-xs font-semibold uppercase tracking-wide mb-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-            >
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-2 text-[var(--muted-foreground)]">
               {cfg.label}
             </p>
             <p
-              className={`text-4xl font-bold mb-1 ${
-                tier === "P0"
-                  ? "text-red-600 dark:text-red-400"
-                  : tier === "P1"
-                    ? "text-orange-600 dark:text-orange-400"
-                    : tier === "P2"
-                      ? "text-yellow-600 dark:text-yellow-400"
-                      : tier === "P3"
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : "text-slate-600 dark:text-slate-400"
-              }`}
+              className="text-[26px] font-bold tracking-tight mb-1"
+              style={{ color: tierColorMap[tier] || "var(--foreground)" }}
             >
               {tierCounts[tier] || 0}
             </p>
-            <p
-              className={`text-xs ${isDark ? "text-slate-500" : "text-slate-600"}`}
-            >
-              findings
-            </p>
+            <p className="text-xs text-[var(--muted-foreground)]">findings</p>
           </Card>
         ))}
       </div>
@@ -92,37 +75,27 @@ export default function Priority() {
       {Object.entries(grouped).map(([tier, items]) => {
         if (!items.length) return null;
         const cfg = TIER_CONFIG[tier];
-        const tierColors = {
-          P0: isDark
-            ? "border-red-900/50 bg-red-900/10"
-            : "border-red-200 bg-red-50/30",
-          P1: isDark
-            ? "border-orange-900/50 bg-orange-900/10"
-            : "border-orange-200 bg-orange-50/30",
-          P2: isDark
-            ? "border-yellow-900/50 bg-yellow-900/10"
-            : "border-yellow-200 bg-yellow-50/30",
-          P3: isDark
-            ? "border-emerald-900/50 bg-emerald-900/10"
-            : "border-emerald-200 bg-emerald-50/30",
-          UNSCORED: isDark
-            ? "border-slate-800/50 bg-slate-800/10"
-            : "border-slate-200 bg-slate-50/30",
-        };
+        const color = tierColorMap[tier] || "var(--border)";
 
         return (
-          <Card key={tier} className={`border-2 p-0 ${tierColors[tier]}`}>
+          <Card key={tier} className="p-0 overflow-hidden">
             <div
-              className={`px-6 py-4 border-b ${isDark ? "border-slate-800/50" : "border-slate-200"} flex items-center gap-3`}
+              className="px-6 py-4 border-b flex items-center gap-3"
+              style={{ borderColor: "var(--border)" }}
             >
-              <span className={`w-3 h-3 rounded-full ${cfg.dot}`} />
-              <h2
-                className={`font-bold text-lg ${isDark ? "text-slate-200" : "text-slate-900"}`}
-              >
+              <span
+                className="w-2.5 h-2.5 rounded-full"
+                style={{ background: color }}
+              />
+              <h2 className="font-bold text-[15px] text-[var(--foreground)]">
                 {cfg.label}
               </h2>
               <span
-                className={`text-sm font-semibold px-3 py-1 rounded-full ${isDark ? "bg-slate-800 text-slate-400" : "bg-slate-200 text-slate-700"}`}
+                className="text-xs font-semibold px-2.5 py-0.5 rounded-md"
+                style={{
+                  background: "var(--muted)",
+                  color: "var(--muted-foreground)",
+                }}
               >
                 {items.length} findings
               </span>
@@ -132,7 +105,12 @@ export default function Priority() {
               <table className="w-full text-sm">
                 <thead>
                   <tr
-                    className={`border-b ${isDark ? "border-slate-800/30 bg-slate-900/30" : "border-slate-200 bg-slate-100/50"} ${isDark ? "text-slate-400" : "text-slate-600"} text-xs font-semibold uppercase tracking-wider`}
+                    className="border-b text-[10.5px] font-semibold uppercase tracking-[0.1em]"
+                    style={{
+                      borderColor: "var(--border)",
+                      color: "var(--muted-foreground)",
+                      background: "var(--surface-2)",
+                    }}
                   >
                     <th className="px-6 py-3 text-left">Score</th>
                     <th className="px-6 py-3 text-left">Vulnerability</th>
@@ -143,9 +121,7 @@ export default function Priority() {
                     <th className="px-6 py-3 text-left">Signals</th>
                   </tr>
                 </thead>
-                <tbody
-                  className={`divide-y ${isDark ? "divide-slate-800/30" : "divide-slate-200"}`}
-                >
+                <tbody className="divide-y divide-[var(--border)]">
                   {items.map((f) => {
                     const ti = f.threat_intel || {};
                     const risk = f.risk_score || {};
@@ -153,21 +129,21 @@ export default function Priority() {
                       f.asset?.hostname ||
                       f.asset?.ip ||
                       f.asset?.domain ||
-                      "—";
+                      "\u2014";
                     return (
                       <tr
                         key={f.finding_id}
-                        className={`smooth-transition ${isDark ? "hover:bg-slate-800/30" : "hover:bg-slate-100/50"}`}
+                        className="smooth-transition hover:bg-[var(--accent)]/40"
                       >
                         <td className="px-6 py-4">
-                          <span className="text-xl font-bold bg-linear-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-                            {fmtScore(risk.final_score)}
-                          </span>
+                          {risk.final_score != null ? (
+                            <RiskScorePill score={risk.final_score} />
+                          ) : (
+                            <span className="text-[var(--muted-foreground)] text-[13px]">—</span>
+                          )}
                         </td>
                         <td className="px-6 py-4">
-                          <p
-                            className={`font-medium truncate max-w-xs ${isDark ? "text-slate-200" : "text-slate-900"}`}
-                          >
+                          <p className="font-medium truncate max-w-xs text-[13px] text-[var(--foreground)]">
                             {f.vulnerability_name}
                           </p>
                         </td>
@@ -177,30 +153,23 @@ export default function Priority() {
                         <td className="px-6 py-4">
                           <ToolBadge tool={f.source_tool} />
                         </td>
-                        <td
-                          className={`px-6 py-4 text-xs font-mono ${isDark ? "text-slate-400" : "text-slate-600"}`}
-                        >
-                          {host}
+                        <td className="px-6 py-4">
+                          <span className="mono text-xs text-[var(--muted-foreground)]">
+                            {host}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-xs">
-                          <span
-                            className={
-                              f.cve_id
-                                ? isDark
-                                  ? "text-blue-400"
-                                  : "text-blue-700 font-medium"
-                                : isDark
-                                  ? "text-slate-500"
-                                  : "text-slate-400"
-                            }
-                          >
-                            {f.cve_id || "—"}
-                          </span>
-                          {f.cwe_id && (
-                            <span
-                              className={`ml-2 ${isDark ? "text-secondary-400" : "text-secondary-700 font-medium"}`}
-                            >
+                          {f.cve_id ? (
+                            <span className="text-[var(--primary)] font-medium mono">
+                              {f.cve_id}
+                            </span>
+                          ) : f.cwe_id ? (
+                            <span className="mono text-[var(--muted-foreground)]">
                               {f.cwe_id}
+                            </span>
+                          ) : (
+                            <span className="text-[var(--muted-foreground)]">
+                              {"\u2014"}
                             </span>
                           )}
                         </td>
@@ -208,23 +177,38 @@ export default function Priority() {
                           <div className="flex gap-1.5 flex-wrap">
                             {ti.is_kev && (
                               <span
-                                className={`text-xs font-bold px-2 py-1 rounded-full ${isDark ? "bg-red-600/30 text-red-300" : "bg-red-100 text-red-700"}`}
+                                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                                style={{
+                                  color: "var(--sev-critical)",
+                                  background: "color-mix(in oklab, var(--sev-critical) 16%, transparent)",
+                                  border: "1px solid color-mix(in oklab, var(--sev-critical) 38%, transparent)",
+                                }}
                               >
-                                🚨 KEV
+                                KEV
                               </span>
                             )}
                             {ti.has_public_exploit && (
                               <span
-                                className={`text-xs font-bold px-2 py-1 rounded-full ${isDark ? "bg-orange-600/30 text-orange-300" : "bg-orange-100 text-orange-700"}`}
+                                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                                style={{
+                                  color: "var(--sev-high)",
+                                  background: "color-mix(in oklab, var(--sev-high) 16%, transparent)",
+                                  border: "1px solid color-mix(in oklab, var(--sev-high) 38%, transparent)",
+                                }}
                               >
-                                💣 Exploit
+                                Exploit
                               </span>
                             )}
                             {ti.epss_score > 0.3 && (
                               <span
-                                className={`text-xs font-bold px-2 py-1 rounded-full ${isDark ? "bg-yellow-600/30 text-yellow-300" : "bg-yellow-100 text-yellow-700"}`}
+                                className="text-[11px] font-bold px-2 py-0.5 rounded-md"
+                                style={{
+                                  color: "var(--sev-medium)",
+                                  background: "color-mix(in oklab, var(--sev-medium) 16%, transparent)",
+                                  border: "1px solid color-mix(in oklab, var(--sev-medium) 38%, transparent)",
+                                }}
                               >
-                                ⚠️ EPSS
+                                EPSS
                               </span>
                             )}
                           </div>

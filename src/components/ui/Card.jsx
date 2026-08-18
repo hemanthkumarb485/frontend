@@ -4,10 +4,7 @@ export function Card({ children, className }) {
   return (
     <div
       className={clsx(
-        "rounded-xl border smooth-transition backdrop-blur-xs",
-        "dark:bg-slate-900/60 dark:border-slate-800/50 dark:hover:border-slate-700/50 dark:shadow-lg dark:hover:shadow-xl dark:hover:shadow-slate-900/20",
-        "bg-white/80 border-slate-200/60 hover:border-slate-300/60 shadow-sm hover:shadow-md hover:shadow-slate-900/5",
-        "p-5",
+        "rounded-lg bg-[var(--surface)] p-4 sm:p-6 border border-[var(--border)] smooth-transition",
         className,
       )}
     >
@@ -18,19 +15,21 @@ export function Card({ children, className }) {
 
 export function CardHeader({ title, subtitle, icon: Icon, action }) {
   return (
-    <div className="flex items-center justify-between mb-4 gap-4">
+    <div className="flex items-center justify-between mb-4 gap-4 pb-2">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         {Icon && (
-          <div className="p-2.5 rounded-lg shrink-0 backdrop-blur-sm dark:bg-primary-600/20 dark:text-primary-400 bg-primary-50 text-primary-700">
-            <Icon className="w-5 h-5" />
+          <div
+            className="grid size-9 shrink-0 place-items-center rounded-md border border-[var(--border)] bg-[var(--accent)] text-[var(--foreground)]"
+          >
+            <Icon className="w-[18px] h-[18px]" />
           </div>
         )}
         <div className="min-w-0">
-          <h3 className="font-semibold text-sm dark:text-slate-100 text-slate-900">
+          <h3 className="font-semibold text-base text-[var(--foreground)]">
             {title}
           </h3>
           {subtitle && (
-            <p className="text-xs mt-0.5 dark:text-slate-400 text-slate-600">
+            <p className="text-[13px] mt-0.5 text-[var(--muted-foreground)]">
               {subtitle}
             </p>
           )}
@@ -41,27 +40,40 @@ export function CardHeader({ title, subtitle, icon: Icon, action }) {
   );
 }
 
+export function CardContent({ children, className }) {
+  return <div className={clsx("p-6 pt-0", className)}>{children}</div>;
+}
+
 export function StatCard({
   label,
   value,
   sub,
-  color = "text-primary-600",
+  color = "text-[var(--primary-600)]",
   icon: Icon,
 }) {
   return (
     <Card className="flex items-center gap-4">
       {Icon && (
-        <div className="p-3 rounded-xl shrink-0 dark:bg-slate-800/60 dark:text-primary-400 bg-slate-100 text-primary-600">
-          <Icon className={clsx("w-6 h-6", color)} />
+        <div
+          className={clsx(
+            "grid size-9 shrink-0 place-items-center rounded-md border",
+            color
+          )}
+          style={{
+            borderColor: "color-mix(in oklab, currentColor 25%, transparent)",
+            background: "color-mix(in oklab, currentColor 8%, transparent)",
+          }}
+        >
+          <Icon className="w-[18px] h-[18px]" />
         </div>
       )}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide dark:text-slate-400 text-slate-600">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
           {label}
         </p>
-        <p className={clsx("text-2xl font-bold mt-0.5", color)}>{value}</p>
+        <p className="text-[26px] font-bold tracking-tight mt-0.5">{value}</p>
         {sub && (
-          <p className="text-xs mt-0.5 dark:text-slate-500 text-slate-500">
+          <p className="text-[12.5px] mt-0.5 text-[var(--muted-foreground)]">
             {sub}
           </p>
         )}

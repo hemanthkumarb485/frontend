@@ -113,13 +113,13 @@ export async function createGithubIssue(payload, encryptedToken) {
 export async function exportJSON(session) {
   const res = await api.post('/report/export/json', session, { responseType: 'blob' })
   const url = window.URL.createObjectURL(new Blob([res.data]))
-  const a = document.createElement('a'); a.href = url; a.download = 'vulnrisk_report.json'; a.click()
+  const a = document.createElement('a'); a.href = url; a.download = 'vulnerax_report.json'; a.click()
   window.URL.revokeObjectURL(url)
 }
 export async function exportPDF(session) {
   const res = await api.post('/report/export/pdf', session, { responseType: 'blob' })
   const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-  const a = document.createElement('a'); a.href = url; a.download = 'vulnrisk_report.pdf'; a.click()
+  const a = document.createElement('a'); a.href = url; a.download = 'vulnerax_report.pdf'; a.click()
   window.URL.revokeObjectURL(url)
 }
 export async function healthCheck() {

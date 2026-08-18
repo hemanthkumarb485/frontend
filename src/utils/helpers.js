@@ -3,7 +3,7 @@ export const TIER_CONFIG = {
   P0: { label: 'P0 Critical', bg: 'bg-red-600',    text: 'text-red-100',    border: 'border-red-500',    dot: 'bg-red-500'    },
   P1: { label: 'P1 High',     bg: 'bg-orange-500', text: 'text-orange-100', border: 'border-orange-400', dot: 'bg-orange-400' },
   P2: { label: 'P2 Medium',   bg: 'bg-yellow-500', text: 'text-yellow-100', border: 'border-yellow-400', dot: 'bg-yellow-400' },
-  P3: { label: 'P3 Low',      bg: 'bg-green-600',  text: 'text-green-100',  border: 'border-green-500',  dot: 'bg-green-500'  },
+  P3: { label: 'P3 Low',      bg: 'bg-blue-600',   text: 'text-blue-100',   border: 'border-blue-500',   dot: 'bg-blue-500'   },
   UNSCORED: { label: 'Unscored', bg: 'bg-slate-600', text: 'text-slate-200', border: 'border-slate-500', dot: 'bg-slate-400' },
 }
 
@@ -11,7 +11,7 @@ export const SEVERITY_CONFIG = {
   critical:      { color: 'text-red-400',    bg: 'bg-red-900/40'    },
   high:          { color: 'text-orange-400', bg: 'bg-orange-900/40' },
   medium:        { color: 'text-yellow-400', bg: 'bg-yellow-900/40' },
-  low:           { color: 'text-green-400',  bg: 'bg-green-900/40'  },
+  low:           { color: 'text-blue-400',   bg: 'bg-blue-900/40'   },
   informational: { color: 'text-slate-400',  bg: 'bg-slate-900/40'  },
   unknown:       { color: 'text-slate-400',  bg: 'bg-slate-900/40'  },
 }

@@ -4,6 +4,7 @@ import {
   ArrowUpTrayIcon,
   XMarkIcon,
   CheckCircleIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
@@ -11,6 +12,7 @@ import { uploadScansSSE } from "../api/client";
 import { ProgressBar } from "../components/ProgressBar";
 import { Card, CardHeader } from "../components/ui/Card";
 import { Button } from "../components/ui/Button";
+import { PageHeader } from "../components/ui/PageHeader";
 import { clsx } from "clsx";
 
 const TOOLS = [
@@ -19,59 +21,59 @@ const TOOLS = [
     label: "OWASP ZAP",
     color: "blue",
     formats: ["auto", "sarif", "xml", "json"],
-    accept: ".json,.xml,.html,.pdf,.txt",
+    accept: ".json,.xml,.sarif",
   },
   {
     key: "nuclei",
     label: "Nuclei",
     color: "purple",
     formats: ["auto", "jsonl", "json", "sarif", "markdown"],
-    accept: ".jsonl,.json,.md,.sarif,.pdf",
+    accept: ".jsonl,.json,.sarif,.md",
   },
   {
     key: "openvas",
     label: "OpenVAS",
     color: "cyan",
     formats: ["xml"],
-    accept: ".xml,.pdf,.txt",
+    accept: ".xml",
   },
   {
     key: "nmap",
     label: "Nmap",
     color: "emerald",
     formats: ["auto", "xml", "normal", "grepable"],
-    accept: ".xml,.txt,.gnmap,.pdf",
+    accept: ".xml,.txt,.gnmap",
   },
 ];
 const CRITS = [
-  { value: "production", label: "🔴 Production ×1.2" },
-  { value: "staging", label: "🟡 Staging ×1.0" },
-  { value: "development", label: "🟢 Dev ×0.8" },
-  { value: "unknown", label: "⚪ Unknown ×1.0" },
+  { value: "production", label: "Production x1.2" },
+  { value: "staging", label: "Staging x1.0" },
+  { value: "development", label: "Dev x0.8" },
+  { value: "unknown", label: "Unknown x1.0" },
 ];
 
 const colorClasses = {
   blue: {
-    border: "border-blue-600/40",
-    bg: "bg-blue-600/10",
+    border: "border-blue-500/30",
+    bg: "bg-blue-500/10",
     text: "text-blue-600 dark:text-blue-400",
     highlight: "dark:ring-blue-500/30",
   },
   purple: {
-    border: "border-purple-600/40",
-    bg: "bg-purple-600/10",
+    border: "border-purple-500/30",
+    bg: "bg-purple-500/10",
     text: "text-purple-600 dark:text-purple-400",
     highlight: "dark:ring-purple-500/30",
   },
   cyan: {
-    border: "border-cyan-600/40",
-    bg: "bg-cyan-600/10",
+    border: "border-cyan-500/30",
+    bg: "bg-cyan-500/10",
     text: "text-cyan-600 dark:text-cyan-400",
     highlight: "dark:ring-cyan-500/30",
   },
   emerald: {
-    border: "border-emerald-600/40",
-    bg: "bg-emerald-600/10",
+    border: "border-emerald-500/30",
+    bg: "bg-emerald-500/10",
     text: "text-emerald-600 dark:text-emerald-400",
     highlight: "dark:ring-emerald-500/30",
   },
@@ -86,24 +88,22 @@ function Zone({ mode, tool, file, format, onFile, onFormat, onClear }) {
   return (
     <div
       className={clsx(
-        "rounded-xl p-5 border smooth-transition",
-        isDark
-          ? "bg-slate-900/30 border-slate-800/50"
-          : "bg-slate-50 border-slate-200",
-        drag &&
-          (isDark
-            ? "ring-2 ring-primary-500/50 border-primary-500/30"
-            : "ring-2 ring-primary-500/30 border-primary-500/20"),
+        "rounded-md p-5 border smooth-transition",
+        drag && "ring-2 ring-[var(--primary)]/40 border-[var(--primary)]/30"
       )}
+      style={{
+        background: "var(--surface)",
+        borderColor: drag ? undefined : "var(--border)",
+      }}
     >
       <div className="flex justify-between items-center mb-4">
-        <span className={clsx("font-semibold text-sm", colorClass.text)}>
+        <span className={clsx("font-semibold text-[13px]", colorClass.text)}>
           {tool.label}
         </span>
         {file && (
           <button
             onClick={onClear}
-            className={`transition-colors ${isDark ? "text-slate-400 hover:text-red-400" : "text-slate-500 hover:text-red-600"}`}
+            className="transition-colors text-[var(--muted-foreground)] hover:text-red-500"
           >
             <XMarkIcon className="w-4 h-4" />
           </button>
@@ -112,12 +112,10 @@ function Zone({ mode, tool, file, format, onFile, onFormat, onClear }) {
 
       {!file ? (
         <div
-          className={clsx(
-            "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer smooth-transition",
-            isDark
-              ? "border-slate-700 hover:border-slate-600 hover:bg-slate-800/20"
-              : "border-slate-300 hover:border-slate-400 hover:bg-slate-100",
-          )}
+          className="border-2 border-dashed rounded-md p-8 text-center cursor-pointer smooth-transition hover:bg-[var(--accent)]"
+          style={{
+            borderColor: isDark ? "#2f3542" : "#d1d5db",
+          }}
           onDragOver={(e) => {
             e.preventDefault();
             setDrag(true);
@@ -134,14 +132,10 @@ function Zone({ mode, tool, file, format, onFile, onFormat, onClear }) {
           <ArrowUpTrayIcon
             className={clsx("w-8 h-8 mx-auto mb-2", colorClass.text)}
           />
-          <p
-            className={`text-sm font-medium ${isDark ? "text-slate-300" : "text-slate-700"}`}
-          >
+          <p className="text-[13px] font-medium text-[var(--foreground)]">
             Drop your file here
           </p>
-          <p
-            className={`text-xs mt-1 ${isDark ? "text-slate-500" : "text-slate-600"}`}
-          >
+          <p className="text-xs mt-1 text-[var(--muted-foreground)]">
             or click to browse
           </p>
           <input
@@ -154,23 +148,18 @@ function Zone({ mode, tool, file, format, onFile, onFormat, onClear }) {
         </div>
       ) : (
         <div
-          className={clsx(
-            "flex items-center gap-3 rounded-lg p-3 border",
-            isDark
-              ? "bg-slate-800/50 border-slate-700/30"
-              : "bg-slate-100/50 border-slate-200",
-          )}
+          className="flex items-center gap-3 rounded-md p-3 border"
+          style={{
+            background: "var(--accent)",
+            borderColor: "var(--border)",
+          }}
         >
           <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0" />
           <div className="flex-1 min-w-0">
-            <p
-              className={`text-sm font-medium truncate ${isDark ? "text-slate-200" : "text-slate-900"}`}
-            >
+            <p className="text-[13px] font-medium truncate text-[var(--foreground)]">
               {file.name}
             </p>
-            <p
-              className={`text-xs mt-0.5 ${isDark ? "text-slate-500" : "text-slate-600"}`}
-            >
+            <p className="text-xs mt-0.5 text-[var(--muted-foreground)]">
               {(file.size / 1024).toFixed(1)} KB
             </p>
           </div>
@@ -178,20 +167,18 @@ function Zone({ mode, tool, file, format, onFile, onFormat, onClear }) {
       )}
 
       <div className="mt-4">
-        <label
-          className={`text-xs font-semibold mb-2 block ${isDark ? "text-slate-400" : "text-slate-700"}`}
-        >
+        <label className="text-[11px] font-semibold uppercase tracking-[0.12em] mb-2 block text-[var(--muted-foreground)]">
           Format
         </label>
         <select
           value={format}
           onChange={(e) => onFormat(e.target.value)}
-          className={clsx(
-            "w-full rounded-lg px-3 py-2 text-sm font-medium border smooth-transition focus:outline-none focus:ring-2 focus:ring-primary-500/50",
-            isDark
-              ? "bg-slate-800 border-slate-700 text-slate-200"
-              : "bg-white border-slate-300 text-slate-900",
-          )}
+          className="w-full rounded-md px-3 py-2 text-sm font-medium border smooth-transition focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/50"
+          style={{
+            background: "var(--surface-2)",
+            borderColor: "var(--border)",
+            color: "var(--foreground)",
+          }}
         >
           {tool.formats.map((f) => (
             <option key={f} value={f}>
@@ -229,7 +216,60 @@ export default function Upload() {
     nmap: "auto",
   });
   const [crit, setCrit] = useState("unknown");
+  const [toastError, setToastError] = useState(null);
   const hasFiles = Object.values(files).some(Boolean);
+
+  const showToast = (msg) => {
+    setToastError(msg);
+    setTimeout(() => {
+      setToastError((current) => current === msg ? null : current);
+    }, 5000);
+  };
+
+  const handleFileChange = (toolKey, file) => {
+    if (!file) return;
+
+    const tool = TOOLS.find((t) => t.key === toolKey);
+    if (!tool) return;
+
+    // 1. Validate file extension
+    const ext = "." + file.name.split('.').pop().toLowerCase();
+    const allowedExts = tool.accept.split(',');
+    if (!allowedExts.includes(ext)) {
+      showToast(`Invalid file format for ${tool.label}. Only ${tool.accept} are allowed.`);
+      return;
+    }
+
+    // 2. Add file to files state
+    setFiles((p) => ({ ...p, [toolKey]: file }));
+
+    // 3. Auto format conversion:
+    // If the current format selected is "auto", change it to the uploaded file type automatically!
+    if (fmts[toolKey] === "auto") {
+      // Map file extension to format
+      let detectedFmt = "auto";
+      const rawExt = file.name.split('.').pop().toLowerCase();
+      if (rawExt === "sarif") {
+        detectedFmt = "sarif";
+      } else if (rawExt === "xml") {
+        detectedFmt = "xml";
+      } else if (rawExt === "json") {
+        detectedFmt = "json";
+      } else if (rawExt === "jsonl") {
+        detectedFmt = "jsonl";
+      } else if (rawExt === "txt") {
+        if (toolKey === "nmap") detectedFmt = "normal";
+      } else if (rawExt === "gnmap") {
+        if (toolKey === "nmap") detectedFmt = "grepable";
+      } else if (rawExt === "md") {
+        detectedFmt = "markdown";
+      }
+
+      if (tool.formats.includes(detectedFmt)) {
+        setFmts((p) => ({ ...p, [toolKey]: detectedFmt }));
+      }
+    }
+  };
 
   const submit = () => {
     if (!hasFiles) return;
@@ -258,7 +298,7 @@ export default function Upload() {
         setSession(data);
         setIsProcessing(false);
         setProgress(null);
-        navigate("/");
+        navigate("/dashboard");
       },
       (err) => {
         setError(String(err));
@@ -269,24 +309,27 @@ export default function Upload() {
   };
 
   return (
-    <div className="max-w-5xl space-y-8">
-      {/* Header */}
-      <div>
-        <h1
-          className={`text-3xl font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}
-        >
-          Upload Scan Results
-        </h1>
-        <p
-          className={`text-base mt-2 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
-          Supports OWASP ZAP, Nuclei, OpenVAS & Nmap — all formats, max 1 GB per
-          file.
-        </p>
-      </div>
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* Error Toaster */}
+      {toastError && (
+        <div className="fixed top-5 right-5 z-[2000] max-w-sm rounded-md border border-[var(--border)] border-l-4 border-l-red-500 bg-[var(--surface-2)] p-4 text-[var(--foreground)] shadow-md transition-all duration-300 animate-slide-in flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <ExclamationTriangleIcon className="w-5 h-5 text-red-500 shrink-0" />
+            <p className="text-sm font-semibold">{toastError}</p>
+          </div>
+          <button onClick={() => setToastError(null)} className="text-[var(--muted-foreground)] hover:text-[var(--foreground)] shrink-0 cursor-pointer">
+            <XMarkIcon className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <PageHeader
+        title="Upload Scan Results"
+        subtitle="Supports OWASP ZAP, Nuclei, OpenVAS & Nmap — all formats, max 1 GB per file."
+      />
 
       {/* Asset Criticality */}
-      <Card>
+      <Card className="!rounded-md">
         <CardHeader
           title="Asset Criticality Level"
           subtitle="Affects risk scoring multiplier"
@@ -297,12 +340,11 @@ export default function Upload() {
               key={o.value}
               onClick={() => setCrit(o.value)}
               className={clsx(
-                "px-4 py-2.5 rounded-lg text-sm font-medium border-2 smooth-transition",
+                "px-4 py-2.5 rounded-md text-sm font-semibold border smooth-transition cursor-pointer",
+                "hover:bg-zinc-900 hover:text-white dark:hover:bg-white dark:hover:text-black hover:border-transparent",
                 crit === o.value
-                  ? "bg-linear-to-r from-primary-600 to-primary-700 border-primary-700 text-white shadow-md shadow-primary-600/20"
-                  : isDark
-                    ? "bg-slate-800/30 border-slate-700/30 text-slate-400 hover:border-slate-600/50 hover:bg-slate-800/50"
-                    : "bg-slate-100 border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-200",
+                  ? "bg-[var(--primary-600)]/10 border-[var(--border)] text-[var(--primary-600)]"
+                  : "bg-[var(--accent)] border-[var(--border)] text-[var(--muted-foreground)]"
               )}
             >
               {o.label}
@@ -313,9 +355,7 @@ export default function Upload() {
 
       {/* File Upload Zones */}
       <div>
-        <h2
-          className={`text-lg font-semibold mb-4 ${isDark ? "text-slate-300" : "text-slate-700"}`}
-        >
+        <h2 className="text-[18px] font-bold text-[var(--foreground)] mb-4">
           Upload Scanner Results
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -326,7 +366,7 @@ export default function Upload() {
               tool={t}
               file={files[t.key]}
               format={fmts[t.key]}
-              onFile={(f) => setFiles((p) => ({ ...p, [t.key]: f }))}
+              onFile={(f) => handleFileChange(t.key, f)}
               onFormat={(fmt) => setFmts((p) => ({ ...p, [t.key]: fmt }))}
               onClear={() => setFiles((p) => ({ ...p, [t.key]: null }))}
             />
@@ -343,7 +383,7 @@ export default function Upload() {
         disabled={!hasFiles || isProcessing}
         variant="primary"
         size="lg"
-        className="w-full"
+        className="w-full !rounded-md"
       >
         {isProcessing ? (
           <>
@@ -351,16 +391,11 @@ export default function Upload() {
             <span>Processing Scans...</span>
           </>
         ) : (
-          <>
-            <span>🚀</span>
-            <span>Analyze & Prioritize Findings</span>
-          </>
+          <span>Analyze & Prioritize Findings</span>
         )}
       </Button>
 
-      <p
-        className={`text-xs text-center ${isDark ? "text-slate-500" : "text-slate-600"}`}
-      >
+      <p className="text-xs text-center text-[var(--muted-foreground)]">
         Your scans are processed securely. No data is stored after analysis.
       </p>
     </div>

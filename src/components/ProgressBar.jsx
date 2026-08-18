@@ -11,40 +11,46 @@ export function ProgressBar({ progress }) {
     : null
 
   const stageLabels = {
-    start: '🚀 Starting',
-    parsing: '📂 Parsing Files',
-    normalization: '🔄 Normalizing',
-    deduplication: '🔍 Deduplicating',
-    enrichment: '🛡️ Enriching (NVD/EPSS/KEV)',
-    scoring: '📊 Scoring Risk',
-    processing: '⚙️ Processing',
-    complete: '✅ Complete',
-    error: '❌ Error',
+    start: 'Starting',
+    parsing: 'Parsing Files',
+    normalization: 'Normalizing',
+    deduplication: 'Deduplicating',
+    enrichment: 'Enriching (NVD/EPSS/KEV)',
+    scoring: 'Scoring Risk',
+    processing: 'Processing',
+    complete: 'Complete',
+    error: 'Error',
   }
 
   const isComplete = stage === 'complete'
   const isError = stage === 'error'
 
   return (
-    <div className="bg-slate-800 border border-slate-700 rounded-xl p-5 space-y-4">
+    <div
+      className="rounded-md p-5 space-y-4 border"
+      style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}
+    >
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-slate-200">
+        <span className="text-[13px] font-semibold text-[var(--foreground)]">
           {stageLabels[stage] || stage}
         </span>
-        <span className="text-sm font-bold text-indigo-400">{percent}%</span>
+        <span className="mono font-bold text-[var(--primary)]">{percent}%</span>
       </div>
 
       {/* Bar */}
-      <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+      <div
+        className="w-full h-[5px] rounded-md overflow-hidden"
+        style={{ background: 'var(--muted)' }}
+      >
         <div
-          className={`h-full rounded-full transition-all duration-500 ${
-            isError ? 'bg-red-500' : isComplete ? 'bg-emerald-500' : 'bg-indigo-500'
+          className={`h-full rounded-md transition-all duration-500 ${
+            isError ? 'bg-red-500' : isComplete ? 'bg-emerald-500' : 'bg-[var(--primary-600)]'
           }`}
           style={{ width: `${percent}%` }}
         />
       </div>
 
-      <div className="flex justify-between text-xs text-slate-400">
+      <div className="flex justify-between text-[12.5px] text-[var(--muted-foreground)]">
         <span>{message}</span>
         <span className="flex gap-4">
           <span>Elapsed: {elapsed_seconds?.toFixed(1)}s</span>

@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
 import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
 import { FindingCard } from "../components/FindingCard";
+import { PageHeader } from "../components/ui/PageHeader";
 import {
   getGithubOAuthUrl,
   getGithubRepos,
@@ -24,11 +25,11 @@ import {
 const TIERS = ["All", "P0", "P1", "P2", "P3", "UNSCORED"];
 const TOOLS = ["All", "zap", "nuclei", "openvas", "nmap"];
 const TIER_LABELS = {
-  P0: "🔴 Critical (P0)",
-  P1: "🟠 High (P1)",
-  P2: "🟡 Medium (P2)",
-  P3: "🟢 Low (P3)",
-  UNSCORED: "⚪ Unscored",
+  P0: "Critical (P0)",
+  P1: "High (P1)",
+  P2: "Medium (P2)",
+  P3: "Low (P3)",
+  UNSCORED: "Unscored",
 };
 
 export default function Findings() {
@@ -42,6 +43,7 @@ export default function Findings() {
     saveSelectedRepo,
     raisedTickets,
     markTicketRaised,
+    saveGithubConnection,
   } = useScan();
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("All");
@@ -52,6 +54,19 @@ export default function Findings() {
   const [repoLoading, setRepoLoading] = useState(false);
   const [pendingFinding, setPendingFinding] = useState(null);
   const [ticketError, setTicketError] = useState(null);
+
+  useEffect(() => {
+    const handler = (event) => {
+      if (event.data && event.data.type === "github-connected") {
+        const { encrypted_token, github_username } = event.data;
+        saveGithubConnection(encrypted_token, github_username);
+        setAuthDialog(false);
+        navigate("/tickets");
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [saveGithubConnection, navigate]);
 
   const findings = session?.findings || [];
   const filtered = useMemo(
@@ -157,98 +172,80 @@ export default function Findings() {
     }
   };
 
-  const connectGithub = async () => {
-    try {
-      const { oauth_url } = await getGithubOAuthUrl();
-      window.open(oauth_url, "_blank", "width=600,height=700");
-    } catch (e) {
-      setTicketError(e.message);
-    }
+  const connectGithub = () => {
+    setAuthDialog(false);
+    navigate("/tickets");
   };
 
   if (!session)
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p
-          className={`text-base ${isDark ? "text-slate-400" : "text-slate-600"}`}
-        >
+        <p className="text-[13px] text-[var(--muted-foreground)]">
           No scan data. Upload first.
         </p>
         <button
           onClick={() => navigate("/upload")}
-          className="px-6 py-2 bg-linear-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-lg text-sm font-medium shadow-md hover:shadow-lg transition-all"
+          className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium transition-all"
         >
-          📤 Upload Scans
+          Upload Scans
         </button>
       </div>
     );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1
-            className={`text-3xl font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}
-          >
-            Findings
-          </h1>
-          <p
-            className={`text-sm mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-          >
-            {filtered.length} of {findings.length} findings
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {["priority", "host"].map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all smooth-transition ${
-                view === v
-                  ? "bg-linear-to-r from-primary-600 to-primary-700 text-white shadow-md shadow-primary-600/20"
-                  : isDark
-                    ? "bg-slate-800/50 text-slate-300 hover:bg-slate-800 border border-slate-700/30"
-                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-              }`}
-            >
-              {v === "priority" ? "Priority View" : "Host View"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <PageHeader
+        title="Findings"
+        subtitle={`${filtered.length} of ${findings.length} findings`}
+        actions={
+          <div className="flex gap-2">
+            {["priority", "host"].map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className="px-4 py-2 rounded-md text-sm font-medium smooth-transition"
+                style={{
+                  background:
+                    view === v ? "linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)" : "var(--accent)",
+                  color: view === v ? "white" : "var(--foreground)",
+                  border: `1px solid ${view === v ? "transparent" : "var(--border)"}`,
+                }}
+              >
+                {v === "priority" ? "Priority View" : "Host View"}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
       {/* Search and Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div
-          className={`relative flex-1 min-w-48 px-4 py-2.5 rounded-lg border smooth-transition ${
-            isDark
-              ? "bg-slate-900/50 border-slate-800/50 focus-within:border-primary-600/30"
-              : "bg-slate-50 border-slate-200 focus-within:border-primary-600/30"
-          }`}
+          className="relative flex-1 min-w-48 px-4 py-2.5 rounded-md border smooth-transition focus-within:border-[var(--primary)]/40"
+          style={{
+            background: "var(--surface)",
+            borderColor: "var(--border)",
+          }}
         >
-          <MagnifyingGlassIcon
-            className={`w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-slate-500" : "text-slate-400"}`}
-          />
+          <MagnifyingGlassIcon className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, CVE, host..."
-            className={`w-full pl-7 bg-transparent text-sm focus:outline-none ${isDark ? "text-slate-200 placeholder-slate-500" : "text-slate-900 placeholder-slate-400"}`}
+            className="w-full pl-7 bg-transparent text-sm focus:outline-none text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
           />
         </div>
         <div className="flex items-center gap-2">
-          <FunnelIcon
-            className={`w-4 h-4 ${isDark ? "text-slate-500" : "text-slate-400"}`}
-          />
+          <FunnelIcon className="w-4 h-4 text-[var(--muted-foreground)]" />
           <select
             value={tierFilter}
             onChange={(e) => setTierFilter(e.target.value)}
-            className={`rounded-lg px-3 py-2 text-sm font-medium border smooth-transition ${
-              isDark
-                ? "bg-slate-900/50 border-slate-800/50 text-slate-300 focus:border-primary-600/30"
-                : "bg-slate-50 border-slate-200 text-slate-700 focus:border-primary-600/30"
-            } focus:outline-none`}
+            className="rounded-md px-3 py-2 text-sm font-medium border smooth-transition focus:outline-none focus:border-[var(--primary)]/40"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
           >
             {TIERS.map((t) => (
               <option key={t}>{t}</option>
@@ -257,11 +254,12 @@ export default function Findings() {
           <select
             value={toolFilter}
             onChange={(e) => setToolFilter(e.target.value)}
-            className={`rounded-lg px-3 py-2 text-sm font-medium border smooth-transition ${
-              isDark
-                ? "bg-slate-900/50 border-slate-800/50 text-slate-300 focus:border-primary-600/30"
-                : "bg-slate-50 border-slate-200 text-slate-700 focus:border-primary-600/30"
-            } focus:outline-none`}
+            className="rounded-md px-3 py-2 text-sm font-medium border smooth-transition focus:outline-none focus:border-[var(--primary)]/40"
+            style={{
+              background: "var(--surface)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
+            }}
           >
             {TOOLS.map((t) => (
               <option key={t} value={t}>
@@ -293,19 +291,17 @@ export default function Findings() {
           return (
             <div key={group}>
               <div className="flex items-center gap-3 mb-4">
-                <h2
-                  className={`font-semibold text-base ${isDark ? "text-slate-300" : "text-slate-700"}`}
-                >
+                <h2 className="text-[13px] font-semibold text-[var(--foreground)]">
                   {view === "priority"
                     ? TIER_LABELS[group] || group
-                    : `🌐 ${group}`}
+                    : group}
                 </h2>
                 <span
-                  className={`text-xs font-semibold px-3 py-1 rounded-full ${
-                    isDark
-                      ? "bg-slate-800 text-slate-400"
-                      : "bg-slate-200 text-slate-600"
-                  }`}
+                  className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md"
+                  style={{
+                    background: "var(--muted)",
+                    color: "var(--muted-foreground)",
+                  }}
                 >
                   {items.length}
                 </span>
@@ -324,10 +320,8 @@ export default function Findings() {
           );
         })}
         {filtered.length === 0 && (
-          <div
-            className={`text-center py-16 ${isDark ? "text-slate-400" : "text-slate-600"}`}
-          >
-            <p className="text-base font-medium">
+          <div className="text-center py-16 text-[var(--muted-foreground)]">
+            <p className="text-[13px] font-medium">
               No findings match your filters.
             </p>
           </div>
@@ -339,20 +333,21 @@ export default function Findings() {
         onClose={() => setAuthDialog(false)}
         PaperProps={{
           sx: {
-            bgcolor: "#1e293b",
-            color: "#f1f5f9",
-            borderRadius: 3,
+            bgcolor: isDark ? "var(--surface)" : "#ffffff",
+            color: isDark ? "var(--foreground)" : "#1c2434",
+            borderRadius: 2,
             minWidth: 360,
+            border: "1px solid var(--border)",
           },
         }}
       >
-        <DialogTitle sx={{ color: "#f1f5f9", fontWeight: 700 }}>
+        <DialogTitle sx={{ color: "inherit", fontWeight: 700 }}>
           {githubToken ? "Select Repository" : "Connect GitHub"}
         </DialogTitle>
         <DialogContent>
           {!githubToken ? (
             <div className="space-y-3 pt-1">
-              <p className="text-slate-400 text-sm">
+              <p className="text-[var(--muted-foreground)] text-sm">
                 Authenticate with GitHub to raise tickets. You will only be asked
                 once.
               </p>
@@ -361,27 +356,27 @@ export default function Findings() {
                 fullWidth
                 onClick={connectGithub}
                 sx={{
-                  bgcolor: "#6366f1",
-                  "&:hover": { bgcolor: "#4f46e5" },
+                  bgcolor: "#2563eb",
+                  "&:hover": { bgcolor: "#1d4ed8" },
                   textTransform: "none",
                   fontWeight: 700,
                 }}
               >
                 Connect GitHub
               </Button>
-              <p className="text-slate-500 text-xs">
+              <p className="text-[var(--muted-foreground)] text-xs">
                 After authorising, click Raise Ticket again.
               </p>
             </div>
           ) : (
             <div className="space-y-3 pt-1">
-              <p className="text-slate-400 text-sm">
+              <p className="text-[var(--muted-foreground)] text-sm">
                 Select the repository where the issue will be created.
               </p>
               {repoLoading ? (
                 <CircularProgress
                   size={24}
-                  sx={{ color: "#6366f1", display: "block", mx: "auto" }}
+                  sx={{ color: "#2563eb", display: "block", mx: "auto" }}
                 />
               ) : repos.length === 0 ? (
                 <Button
@@ -389,8 +384,8 @@ export default function Findings() {
                   fullWidth
                   onClick={loadRepos}
                   sx={{
-                    borderColor: "#6366f1",
-                    color: "#818cf8",
+                    borderColor: "#2563eb",
+                    color: "#3b82f6",
                     textTransform: "none",
                   }}
                 >
@@ -403,9 +398,9 @@ export default function Findings() {
                   fullWidth
                   size="small"
                   sx={{
-                    bgcolor: "#0f172a",
-                    color: "#f1f5f9",
-                    ".MuiOutlinedInput-notchedOutline": { borderColor: "#334155" },
+                    bgcolor: "var(--surface-2)",
+                    color: "var(--foreground)",
+                    ".MuiOutlinedInput-notchedOutline": { borderColor: "var(--border)" },
                   }}
                 >
                   <MenuItem value="">select repo</MenuItem>
@@ -422,7 +417,7 @@ export default function Findings() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
             onClick={() => setAuthDialog(false)}
-            sx={{ color: "#94a3b8", textTransform: "none" }}
+            sx={{ color: "var(--muted-foreground)", textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -435,8 +430,8 @@ export default function Findings() {
                   doRaiseTicket(pendingFinding, githubToken, selectedRepo);
               }}
               sx={{
-                bgcolor: "#6366f1",
-                "&:hover": { bgcolor: "#4f46e5" },
+                bgcolor: "#2563eb",
+                "&:hover": { bgcolor: "#1d4ed8" },
                 textTransform: "none",
                 fontWeight: 700,
               }}
