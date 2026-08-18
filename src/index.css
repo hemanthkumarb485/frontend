@@ -247,11 +247,12 @@ button:active, a:active {
 .glow-box {
   border: 1px solid var(--border) !important;
   box-shadow: none !important;
-  transition: all 0.15s ease-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glow-box:hover {
-  border-color: var(--primary-500) !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 8px 30px rgba(9, 9, 11, 0.08) !important;
 }
 
 html.dark .glow-box {
@@ -260,34 +261,23 @@ html.dark .glow-box {
 }
 
 html.dark .glow-box:hover {
-  border-color: var(--primary-500) !important;
+  border-color: #3f3f46 !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
 }
 
-@keyframes logoHeartbeat {
+@keyframes logoGlowBlink {
   0%, 100% {
-    transform: scale(1);
     filter: drop-shadow(0 0 2px var(--glow-color));
+    opacity: 0.8;
   }
-  14% {
-    transform: scale(1.08);
-    filter: drop-shadow(0 0 8px var(--glow-color-solid));
-  }
-  28% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 2px var(--glow-color));
-  }
-  42% {
-    transform: scale(1.08);
-    filter: drop-shadow(0 0 8px var(--glow-color-solid));
-  }
-  70% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 2px var(--glow-color));
+  50% {
+    filter: drop-shadow(0 0 10px var(--glow-color-solid));
+    opacity: 1;
   }
 }
 
-.logo-heartbeat {
-  animation: logoHeartbeat 2.8s infinite ease-in-out;
+.logo-glow-blink {
+  animation: logoGlowBlink 2.2s infinite ease-in-out;
   transform-origin: center;
   display: inline-block;
 }

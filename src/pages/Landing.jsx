@@ -134,19 +134,19 @@ export default function Landing() {
       `}</style>
       {/* Header */}
       <header className="sticky top-0 z-40 border-b border-[var(--border)]/60 bg-[var(--background)]/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5">
+          <Link to="/" className="flex items-center gap-3.5 hover:opacity-90 transition-opacity">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="1.6"
               stroke="var(--foreground)"
-              className="w-6 h-6 shrink-0 logo-heartbeat"
+              className="w-8 h-8 shrink-0 logo-glow-blink"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286Zm0 13.036h.008v.008H12v-.008Z" />
             </svg>
-            <span className="text-lg font-bold tracking-tight text-[var(--foreground)]">
+            <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
               VulneraX
             </span>
           </Link>
@@ -167,7 +167,7 @@ export default function Landing() {
             {/* Theme Toggler */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-md border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] transition-all active:scale-95 cursor-pointer"
+              className="p-2.5 rounded-md border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--accent)] transition-all active:scale-95 cursor-pointer"
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {isDark ? <Sun className="w-[16px] h-[16px]" /> : <Moon className="w-[16px] h-[16px]" />}
@@ -175,7 +175,7 @@ export default function Landing() {
 
             <Link
               to="/dashboard"
-              className="inline-flex items-center justify-center whitespace-nowrap font-medium cursor-pointer transition-all bg-[var(--primary-600)] hover:bg-[var(--primary-600)]/90 text-[var(--primary-foreground)] rounded-md px-4 text-xs h-9"
+              className="inline-flex items-center justify-center whitespace-nowrap font-medium cursor-pointer transition-all bg-[var(--primary-600)] hover:bg-[var(--primary-600)]/90 text-[var(--primary-foreground)] rounded-md px-5 text-sm h-10"
             >
               Open Dashboard
             </Link>
