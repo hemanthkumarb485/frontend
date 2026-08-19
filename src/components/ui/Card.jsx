@@ -56,15 +56,16 @@ export function StatCard({
       {Icon && (
         <div
           className={clsx(
-            "grid size-9 shrink-0 place-items-center rounded-md border",
+            "grid size-9 shrink-0 place-items-center rounded-md border smooth-transition",
             color
           )}
           style={{
-            borderColor: "color-mix(in oklab, currentColor 25%, transparent)",
-            background: "color-mix(in oklab, currentColor 8%, transparent)",
+            borderColor: "color-mix(in oklab, currentColor 35%, transparent)",
+            background: "color-mix(in oklab, currentColor 10%, transparent)",
+            boxShadow: "0 0 14px color-mix(in oklab, currentColor 25%, transparent)",
           }}
         >
-          <Icon className="w-[18px] h-[18px]" />
+          <Icon className="w-[18px] h-[18px]" style={{ filter: "drop-shadow(0 0 2px currentColor)" }} />
         </div>
       )}
       <div>
