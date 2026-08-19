@@ -48,6 +48,18 @@ export function FindingCard({ finding, onRaiseTicket, raisedTicket }) {
               <TierBadge tier={risk.priority_tier || "UNSCORED"} />
               <SeverityBadge severity={f.severity} />
               <ToolBadge tool={f.source_tool} />
+              {f.finding_type && (
+                <span
+                  className="inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold uppercase"
+                  style={{
+                    color: "var(--foreground)",
+                    background: "var(--accent)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  {f.finding_type}
+                </span>
+              )}
               {f.cvss?.base_score && (
                 <Chip
                   label={`CVSS ${f.cvss.base_score}`}

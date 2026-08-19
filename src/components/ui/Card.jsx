@@ -52,7 +52,7 @@ export function StatCard({
   icon: Icon,
 }) {
   return (
-    <Card className="flex items-center gap-4">
+    <Card className="flex items-center gap-3 !p-[16px] sm:!p-[18px]">
       {Icon && (
         <div
           className={clsx(
@@ -68,13 +68,15 @@ export function StatCard({
           <Icon className="w-[18px] h-[18px]" style={{ filter: "drop-shadow(0 0 2px currentColor)" }} />
         </div>
       )}
-      <div>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-foreground)]">
+      <div className="min-w-0 flex-1 flex flex-col justify-center">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--muted-foreground)] leading-tight truncate">
           {label}
         </p>
-        <p className="text-[26px] font-bold tracking-tight mt-0.5">{value}</p>
+        <p className="text-[25px] font-extrabold tracking-tight mt-1 leading-none text-[var(--foreground)]">
+          {value}
+        </p>
         {sub && (
-          <p className="text-[12.5px] mt-0.5 text-[var(--muted-foreground)]">
+          <p className="text-[11.5px] mt-1 text-[var(--muted-foreground)] leading-tight truncate">
             {sub}
           </p>
         )}
