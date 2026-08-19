@@ -7,6 +7,7 @@ import { PageHeader } from '../components/ui/PageHeader'
 import { fmtScore } from '../utils/helpers'
 import { Chip, Button, Alert, CircularProgress, Select, MenuItem, TextField } from '@mui/material'
 import { CheckCircle as CheckCircleIcon, Key as KeyIcon, Refresh as RefreshIcon, Logout as LogoutIcon } from '@mui/icons-material'
+import TicketComposerModal from '../components/TicketComposerModal'
 
 export default function Tickets() {
   const { session, githubToken, githubUsername, selectedRepo,
@@ -21,6 +22,7 @@ export default function Tickets() {
   const [connectingPat, setConnectingPat] = useState(false)
   const [warning, setWarning]         = useState(null)
   const [reconnecting, setReconnecting] = useState(false)
+  const [ticketDraft, setTicketDraft] = useState(null)
 
   const findings = session?.findings || []
   const p0p1 = findings.filter(f => ['P0','P1'].includes(f.risk_score?.priority_tier))
@@ -59,11 +61,17 @@ export default function Tickets() {
     }
   }
 
-  const createIssue = async (f) => {
+  const openTicketComposer = (f) => {
     if (!githubToken || !selectedRepo) {
       setErr('Connect GitHub and select a repo first.')
       return
     }
+    setTicketDraft(f)
+  }
+
+  const submitTicket = async (customDescription) => {
+    const f = ticketDraft
+    if (!f) return
     setCreating(f.finding_id)
     setErr(null)
     markTicketRaised(f.finding_id, { status: 'creating' })
@@ -72,10 +80,12 @@ export default function Tickets() {
         finding_id: f.finding_id,
         finding_data: f,
         repo_full_name: selectedRepo,
+        custom_description: customDescription,
         labels: ['security', 'vulnerability', f.risk_score?.priority_tier?.toLowerCase() || 'vuln']
       }, githubToken)
       if (r.success) {
         markTicketRaised(f.finding_id, { status: 'raised', issue_number: r.issue_number, issue_url: r.issue_url })
+        setTicketDraft(null)
       } else {
         markTicketRaised(f.finding_id, null)
         setErr(r.error || 'Failed')
@@ -239,7 +249,7 @@ export default function Tickets() {
                 ) : (
                   <Button variant="outlined" size="small" disabled={isBusy||!githubToken||!selectedRepo}
                     startIcon={isBusy?<CircularProgress size={12} color="inherit"/>:null}
-                    onClick={()=>createIssue(f)}
+                    onClick={()=>openTicketComposer(f)}
                     sx={{fontSize:'0.7rem',borderColor:'#2563eb',color:'#3b82f6',whiteSpace:'nowrap',textTransform:'none',
                       '&:hover':{bgcolor:'rgba(37,99,235,0.08)',borderColor:'#3b82f6'},
                       '&:disabled':{borderColor:'var(--border)',color:'var(--muted-foreground)'},
@@ -252,6 +262,14 @@ export default function Tickets() {
           )
         })}
       </div>
+
+      <TicketComposerModal
+        finding={ticketDraft}
+        open={Boolean(ticketDraft)}
+        onClose={() => setTicketDraft(null)}
+        onSubmit={submitTicket}
+        submitting={creating === ticketDraft?.finding_id}
+      />
     </div>
   )
 }

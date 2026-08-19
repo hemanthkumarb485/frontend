@@ -4,8 +4,9 @@ import { Columns3, ChevronDown } from "lucide-react";
 import { useScan } from "../context/ScanContext";
 import { useTheme } from "../context/ThemeContext";
 import { PageHeader } from "../components/ui/PageHeader";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import VulnerabilityTable from "../components/VulnerabilityTable";
+import FindingsAccordion from "../components/findings/FindingsAccordion";
 
 const TIERS = ["All", "P0", "P1", "P2", "P3", "UNSCORED"];
 const TOOLS = ["All", "zap", "nuclei", "openvas", "nmap"];
@@ -33,9 +34,11 @@ export default function Findings() {
   const { mode } = useTheme();
   const isDark = mode === "dark";
   const { session } = useScan();
+  const [searchParams] = useSearchParams();
+  const hostParam = searchParams.get("host");
 
-  const [view, setView] = useState("grid"); // "grid", "priority", "host"
-  const [search, setSearch] = useState("");
+  const [view, setView] = useState("host"); // "host" (accordion), "priority", "grid"
+  const [search, setSearch] = useState(hostParam || "");
   const [tierFilter, setTierFilter] = useState("All");
   const [toolFilter, setToolFilter] = useState("All");
   const [columnsMenuOpen, setColumnsMenuOpen] = useState(false);
@@ -77,27 +80,13 @@ export default function Findings() {
   }, [findings, tierFilter, toolFilter, search]);
 
   const grouped = useMemo(() => {
-    if (view === "priority") {
-      const g = { P0: [], P1: [], P2: [], P3: [], UNSCORED: [] };
-      filtered.forEach((f) => {
-        const t = f.risk_score?.priority_tier || "UNSCORED";
-        g[t]?.push(f);
-      });
-      return g;
-    }
-    const g = {};
+    const g = { P0: [], P1: [], P2: [], P3: [], UNSCORED: [] };
     filtered.forEach((f) => {
-      const host =
-        f.asset?.hostname ||
-        f.asset?.ip ||
-        f.asset?.domain ||
-        f.asset?.url ||
-        "Unknown";
-      if (!g[host]) g[host] = [];
-      g[host].push(f);
+      const t = f.risk_score?.priority_tier || "UNSCORED";
+      g[t]?.push(f);
     });
     return g;
-  }, [filtered, view]);
+  }, [filtered]);
 
   if (!session) {
     return (
@@ -135,9 +124,9 @@ export default function Findings() {
         actions={
           <div className="flex gap-1 bg-[var(--surface-2)] p-1 rounded-lg border border-[var(--border)]">
             {[
-              { id: "grid", label: "Grid" },
+              { id: "host", label: "Host" },
               { id: "priority", label: "Priority" },
-              { id: "host", label: "Host" }
+              { id: "grid", label: "Grid" }
             ].map((v) => (
               <button
                 key={v.id}
@@ -218,88 +207,93 @@ export default function Findings() {
               </div>
             </div>
 
-            {/* Global Columns Dropdown for Grouped Tables */}
-            <div className="relative">
-              <button
-                onClick={() => setColumnsMenuOpen(!columnsMenuOpen)}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold bg-[var(--surface-2)] border-[var(--border)] hover:bg-[var(--accent)] smooth-transition cursor-pointer text-[var(--foreground)]"
-              >
-                <Columns3 className="size-4 text-[var(--muted-foreground)]" />
-                <span>Columns</span>
-                <ChevronDown className="size-3.5 text-[var(--muted-foreground)]" />
-              </button>
+            {/* Global Columns Dropdown for Grouped Tables (Priority view only) */}
+            {view === "priority" && (
+              <div className="relative">
+                <button
+                  onClick={() => setColumnsMenuOpen(!columnsMenuOpen)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold bg-[var(--surface-2)] border-[var(--border)] hover:bg-[var(--accent)] smooth-transition cursor-pointer text-[var(--foreground)]"
+                >
+                  <Columns3 className="size-4 text-[var(--muted-foreground)]" />
+                  <span>Columns</span>
+                  <ChevronDown className="size-3.5 text-[var(--muted-foreground)]" />
+                </button>
 
-              {columnsMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setColumnsMenuOpen(false)} />
-                  <div
-                    className="absolute right-0 mt-1.5 w-48 rounded-lg border p-2 shadow-lg z-20 space-y-1"
-                    style={{
-                      background: "var(--surface)",
-                      borderColor: "var(--border)"
-                    }}
-                  >
-                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--muted-foreground)] px-2 py-1">
-                      Visible columns
-                    </p>
-                    {COLUMNS_CONFIG.map((col) => (
-                      <label
-                        key={col.field}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--accent)] text-xs font-medium cursor-pointer text-[var(--foreground)]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={visibleColumns[col.field]}
-                          onChange={() => toggleColumn(col.field)}
-                          className="accent-[var(--primary)]"
-                        />
-                        <span>{col.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Grouped Tables List */}
-          <div className="space-y-8">
-            {Object.entries(grouped).map(([group, items]) => {
-              if (!items.length) return null;
-              const color = tierColorMap[group] || "var(--border)";
-
-              return (
-                <div key={group} className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    {view === "priority" && (
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
-                    )}
-                    <h2 className="text-sm font-bold text-[var(--foreground)]">
-                      {view === "priority" ? TIER_LABELS[group] || group : group}
-                    </h2>
-                    <span
-                      className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]"
+                {columnsMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setColumnsMenuOpen(false)} />
+                    <div
+                      className="absolute right-0 mt-1.5 w-48 rounded-lg border p-2 shadow-lg z-20 space-y-1"
+                      style={{
+                        background: "var(--surface)",
+                        borderColor: "var(--border)"
+                      }}
                     >
-                      {items.length}
-                    </span>
-                  </div>
-                  {/* Vulnerability Table for this Group */}
-                  <VulnerabilityTable
-                    rows={items}
-                    hideToolbar={true}
-                    visibleColumns={visibleColumns}
-                    setVisibleColumns={setVisibleColumns}
-                    defaultPageSize={5}
-                  />
-                </div>
-              );
-            })}
-            {filtered.length === 0 && (
-              <div className="text-center py-16 text-[var(--muted-foreground)] border border-dashed border-[var(--border)] rounded-xl bg-[var(--surface)]">
-                <p className="text-[13px] font-semibold">No findings match your filters.</p>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--muted-foreground)] px-2 py-1">
+                        Visible columns
+                      </p>
+                      {COLUMNS_CONFIG.map((col) => (
+                        <label
+                          key={col.field}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--accent)] text-xs font-medium cursor-pointer text-[var(--foreground)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[col.field]}
+                            onChange={() => toggleColumn(col.field)}
+                            className="accent-[var(--primary)]"
+                          />
+                          <span>{col.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
+
+          {/* Host view: Asset -> Vuln Type -> Path accordion */}
+          {view === "host" && <FindingsAccordion findings={filtered} />}
+
+          {/* Priority view: grouped tables per tier */}
+          {view === "priority" && (
+            <div className="space-y-8">
+              {Object.entries(grouped).map(([group, items]) => {
+                if (!items.length) return null;
+                const color = tierColorMap[group] || "var(--border)";
+
+                return (
+                  <div key={group} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+                      <h2 className="text-sm font-bold text-[var(--foreground)]">
+                        {TIER_LABELS[group] || group}
+                      </h2>
+                      <span
+                        className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--muted)] text-[var(--muted-foreground)]"
+                      >
+                        {items.length}
+                      </span>
+                    </div>
+                    {/* Vulnerability Table for this Group */}
+                    <VulnerabilityTable
+                      rows={items}
+                      hideToolbar={true}
+                      visibleColumns={visibleColumns}
+                      setVisibleColumns={setVisibleColumns}
+                      defaultPageSize={5}
+                    />
+                  </div>
+                );
+              })}
+              {filtered.length === 0 && (
+                <div className="text-center py-16 text-[var(--muted-foreground)] border border-dashed border-[var(--border)] rounded-xl bg-[var(--surface)]">
+                  <p className="text-[13px] font-semibold">No findings match your filters.</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

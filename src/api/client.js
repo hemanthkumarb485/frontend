@@ -1,9 +1,23 @@
-import axios from 'axios' 
+import axios from 'axios'
+import { supabase } from '../lib/supabaseClient'
 
 const API_BASE = '/api/v1'
 export const api = axios.create({ baseURL: API_BASE, timeout: 120000 })
 
-export function uploadScansSSE(files, onProgress, onComplete, onError) {
+api.interceptors.request.use(async (config) => {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
+async function authHeader() {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+export async function uploadScansSSE(files, onProgress, onComplete, onError) {
   const form = new FormData()
   if (files.zap_file)     { form.append('zap_file', files.zap_file);        form.append('zap_format', files.zap_format || 'auto') }
   if (files.nuclei_file)  { form.append('nuclei_file', files.nuclei_file);   form.append('nuclei_format', files.nuclei_format || 'auto') }
@@ -19,7 +33,9 @@ export function uploadScansSSE(files, onProgress, onComplete, onError) {
     }
   }, 5000)
 
-  fetch(`${API_BASE}/scan/upload`, { method: 'POST', body: form })
+  const headers = await authHeader()
+
+  fetch(`${API_BASE}/scan/upload`, { method: 'POST', body: form, headers })
     .then(res => {
       if (!res.ok) {
         clearInterval(watchdog)
@@ -121,4 +137,23 @@ export async function exportPDF(session) {
 }
 export async function healthCheck() {
   const res = await api.get('../../health'); return res.data
+}
+
+export async function getTargets() {
+  const res = await api.get('/targets'); return res.data
+}
+export async function getTargetFindings(host) {
+  const res = await api.get(`/targets/${encodeURIComponent(host)}/findings`); return res.data
+}
+export async function getRemediationSuggestion(finding) {
+  const res = await api.post('/remediation/suggest', finding); return res.data
+}
+export async function getAiOverview(finding) {
+  const res = await api.post('/remediation/overview', finding); return res.data
+}
+export async function enhanceTicketDescription(finding, currentDescription) {
+  const res = await api.post('/github/tickets/enhance-description', {
+    finding_data: finding, current_description: currentDescription,
+  })
+  return res.data
 }
