@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Sparkles, Ticket, ShieldAlert, ExternalLink } from "lucide-react";
 import { LinearProgress, CircularProgress } from "@mui/material";
 import { GitHub as GithubIcon } from "@mui/icons-material";
 import { useScan } from "../context/ScanContext";
+import { useAuth } from "../context/AuthContext";
 import { SeverityBadge, ToolBadge, TierBadge } from "../components/ui/Badge";
-import { getRemediationSuggestion, getAiOverview, createGithubIssue } from "../api/client";
+import { getRemediationSuggestion, getAiOverview, createGithubIssue, getFindingById } from "../api/client";
 import TicketComposerModal from "../components/TicketComposerModal";
 
 const getSeverityColor = (sev) => {
@@ -32,31 +33,66 @@ export default function FindingDetail() {
   const { findingId } = useParams();
   const navigate = useNavigate();
   const { session, githubToken, selectedRepo, raisedTickets, markTicketRaised } = useScan();
+  const { user } = useAuth();
   const [remediation, setRemediation] = useState(null); // { loading } | { text } | { error }
   const [aiOverview, setAiOverview] = useState(null); // { loading } | { text } | { error }
+  const [remoteFinding, setRemoteFinding] = useState(null); // { loading } | { data } | { error }
   const [ticketDraft, setTicketDraft] = useState(false);
   const [creating, setCreating] = useState(false);
 
-  const finding = session?.findings?.find((f) => f.finding_id === findingId);
+  const sessionFinding = session?.findings?.find((f) => f.finding_id === findingId);
+  const finding = sessionFinding || remoteFinding?.data;
 
-  if (!session) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p className="text-[13px] text-[var(--muted-foreground)]">No scan data. Upload first.</p>
-        <button onClick={() => navigate("/upload")} className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium">
-          Upload Scans
-        </button>
-      </div>
-    );
-  }
+  // Fall back to a backend lookup when the finding isn't in the current
+  // in-memory session — e.g. reached via Targets, which aggregates
+  // persisted findings across all past sessions, not just the active one.
+  // Only signed-in users can have persisted findings to look up at all.
+  useEffect(() => {
+    if (sessionFinding || !user) {
+      setRemoteFinding(null);
+      return;
+    }
+    setRemoteFinding({ loading: true });
+    getFindingById(findingId)
+      .then((data) => setRemoteFinding({ data }))
+      .catch((e) => setRemoteFinding({ error: e.response?.data?.detail || e.message }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [findingId, Boolean(sessionFinding), Boolean(user)]);
+
+  const fetchOverview = async (target) => {
+    setAiOverview({ loading: true });
+    try {
+      const r = await getAiOverview(target);
+      setAiOverview({ text: r.overview });
+    } catch (e) {
+      setAiOverview({ error: e.response?.data?.detail || e.message });
+    }
+  };
+
+  // Always run the scanner/NVD description through AI analysis rather than
+  // showing it verbatim — raw scanner text is thin ("SQL injection may be
+  // possible.") or generic boilerplate, not specific to this finding.
+  useEffect(() => {
+    if (finding) fetchOverview(finding);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finding?.finding_id]);
 
   if (!finding) {
+    if (remoteFinding?.loading) {
+      return (
+        <div className="flex items-center justify-center py-32">
+          <CircularProgress size={28} />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p className="text-[13px] text-[var(--muted-foreground)]">Finding not found in the current session.</p>
-        <Link to="/findings" className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium">
-          Back to Findings
-        </Link>
+        <p className="text-[13px] text-[var(--muted-foreground)]">
+          {remoteFinding?.error || "Finding not found."}
+        </p>
+        <button onClick={() => navigate(-1)} className="px-6 py-2 bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] rounded-md text-sm font-medium">
+          Go Back
+        </button>
       </div>
     );
   }
@@ -69,24 +105,10 @@ export default function FindingDetail() {
   const color = getSeverityColor(finding.severity);
   const isGithubConnected = Boolean(githubToken && selectedRepo);
 
-  // Prefer the NVD's authoritative per-CVE description over the scanner's
-  // generic per-vuln-type text, when we have it. AI-generated overview (once
-  // fetched) takes priority over both — it's the most specific to this finding.
-  const overview = aiOverview?.text || ti.nvd_description || finding.description;
-  const overviewSource = aiOverview?.text ? "AI" : ti.nvd_description ? "NVD" : finding.description ? "Scanner" : null;
-  const cleanOverview = overview ? overview.replace(/<[^>]+>/g, " ").replace(/\s{2,}/g, " ").trim() : null;
-  // NVD is already authoritative; only offer AI generation when we don't have it.
-  const canGenerateOverview = overviewSource !== "NVD";
-
-  const fetchOverview = async () => {
-    setAiOverview({ loading: true });
-    try {
-      const r = await getAiOverview(finding);
-      setAiOverview({ text: r.overview });
-    } catch (e) {
-      setAiOverview({ error: e.response?.data?.detail || e.message });
-    }
-  };
+  // Fallback source material shown only if the AI call fails — raw NVD/
+  // scanner text, never shown as the primary Overview.
+  const fallbackText = ti.nvd_description || finding.description;
+  const cleanFallback = fallbackText ? fallbackText.replace(/<[^>]+>/g, " ").replace(/\s{2,}/g, " ").trim() : null;
 
   const hasExploitIntel = ti.has_public_exploit || ti.has_github_poc;
 
@@ -213,33 +235,48 @@ export default function FindingDetail() {
       <div className="h-px bg-[var(--border)]/60" />
 
       <div className="space-y-4">
-        {/* Overview — AI-generated when requested, else NVD, else the scanner's own description */}
+        {/* Overview — always AI-analyzed from the scanner/NVD source text, never shown verbatim */}
         <div>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--muted-foreground)]">Overview</p>
-              {overviewSource && (
+              {aiOverview?.text && (
                 <span className="text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded bg-[var(--accent)] text-[var(--muted-foreground)]">
-                  Source: {overviewSource}
+                  AI Analysis
                 </span>
               )}
             </div>
-            {canGenerateOverview && (
-              <button
-                onClick={fetchOverview}
-                disabled={aiOverview?.loading}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border border-[var(--primary)]/40 text-[var(--primary)] hover:bg-[var(--primary)]/10 smooth-transition disabled:opacity-50 cursor-pointer"
-              >
-                {aiOverview?.loading ? <CircularProgress size={12} color="inherit" /> : <Sparkles className="size-3.5" />}
-                {aiOverview?.loading ? "Thinking…" : aiOverview?.text ? "Regenerate" : "Get AI Overview"}
-              </button>
-            )}
+            <button
+              onClick={() => fetchOverview(finding)}
+              disabled={aiOverview?.loading}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold border border-[var(--primary)]/40 text-[var(--primary)] hover:bg-[var(--primary)]/10 smooth-transition disabled:opacity-50 cursor-pointer"
+            >
+              {aiOverview?.loading ? <CircularProgress size={12} color="inherit" /> : <Sparkles className="size-3.5" />}
+              {aiOverview?.loading ? "Analyzing…" : "Regenerate"}
+            </button>
           </div>
-          {aiOverview?.error && <p className="mt-2 text-[11.5px] text-[var(--sev-critical)]">{aiOverview.error}</p>}
-          {cleanOverview && (
-            <p className="mt-1.5 text-[12.5px] leading-relaxed text-[var(--foreground)] bg-[var(--surface-2)]/20 p-3.5 rounded-lg border border-[var(--border)]/40 whitespace-pre-line">
-              {cleanOverview}
+
+          {aiOverview?.loading && !aiOverview?.text && (
+            <p className="mt-1.5 text-[12.5px] text-[var(--muted-foreground)] p-3.5 rounded-lg border border-[var(--border)]/40 bg-[var(--surface-2)]/20">
+              Analyzing this finding…
             </p>
+          )}
+
+          {aiOverview?.text && (
+            <p className="mt-1.5 text-[12.5px] leading-relaxed text-[var(--foreground)] bg-[var(--surface-2)]/20 p-3.5 rounded-lg border border-[var(--border)]/40 whitespace-pre-line">
+              {aiOverview.text}
+            </p>
+          )}
+
+          {aiOverview?.error && (
+            <div className="mt-1.5 space-y-2">
+              <p className="text-[11.5px] text-[var(--sev-critical)]">{aiOverview.error}</p>
+              {cleanFallback && (
+                <p className="text-[12.5px] leading-relaxed text-[var(--foreground)] bg-[var(--surface-2)]/20 p-3.5 rounded-lg border border-[var(--border)]/40 whitespace-pre-line">
+                  {cleanFallback}
+                </p>
+              )}
+            </div>
           )}
         </div>
 

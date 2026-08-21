@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useScan } from "../context/ScanContext";
+import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
-import { exportJSON, exportPDF } from "../api/client";
+import { exportJSON, exportPDF, storeScanSession } from "../api/client";
 import {
   DocumentArrowDownIcon,
   DocumentTextIcon,
+  CloudArrowUpIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { getTierCounts } from "../utils/helpers";
 import { Card, CardHeader } from "../components/ui/Card";
@@ -15,12 +18,14 @@ import { Alert, CircularProgress } from "@mui/material";
 
 export default function Reports() {
   const { session } = useScan();
+  const { user } = useAuth();
   const { mode } = useTheme();
   const isDark = mode === "dark";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(null);
   const [msg, setMsg] = useState(null);
   const [msgType, setMsgType] = useState("success");
+  const [stored, setStored] = useState(false);
 
   if (!session) {
     return (
@@ -51,6 +56,26 @@ export default function Reports() {
     } catch (e) {
       setMsgType("error");
       setMsg(`Export failed: ${e.message}`);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleStore = async () => {
+    if (!user) {
+      navigate("/login", { state: { from: { pathname: "/reports" } } });
+      return;
+    }
+    setLoading("store");
+    setMsg(null);
+    try {
+      await storeScanSession(session);
+      setStored(true);
+      setMsgType("success");
+      setMsg("Report stored — view it any time in Targets.");
+    } catch (e) {
+      setMsgType("error");
+      setMsg(`Store failed: ${e.response?.data?.detail || e.message}`);
     } finally {
       setLoading(null);
     }
@@ -148,6 +173,47 @@ export default function Reports() {
 
         {/* Right Column: Stacked Export Options */}
         <div className="lg:col-span-5 flex flex-col gap-6">
+          {/* Store Report */}
+          <Card className="flex flex-col justify-between">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="grid size-11 shrink-0 place-items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                {stored ? (
+                  <CheckCircleIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
+                ) : (
+                  <CloudArrowUpIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-[15px] text-[var(--foreground)]">Store Report</h3>
+                <p className="text-[12.5px] mt-1 text-[var(--muted-foreground)]">
+                  {user
+                    ? "Save this scan to your account — view it any time in Targets."
+                    : "Sign in to save this scan to your account and view it later in Targets."}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={handleStore}
+              disabled={loading === "store" || stored}
+              variant={stored ? "secondary" : "primary"}
+              size="lg"
+              className="w-full"
+            >
+              {loading === "store" ? (
+                <>
+                  <CircularProgress size={16} color="inherit" />
+                  <span>Storing...</span>
+                </>
+              ) : stored ? (
+                <span>Stored</span>
+              ) : user ? (
+                <span>Store Report</span>
+              ) : (
+                <span>Sign in to Store</span>
+              )}
+            </Button>
+          </Card>
+
           {/* JSON Export */}
           <Card className="flex flex-col justify-between">
             <div className="flex items-start gap-4 mb-4">

@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { ExpandMore, ChevronRight } from "@mui/icons-material";
+import { ExpandMore } from "@mui/icons-material";
+import { ExternalLink } from "lucide-react";
 import { SeverityBadge, ToolBadge, TierBadge } from "../ui/Badge";
 import { RiskScorePill } from "../ui/RiskScorePill";
 
@@ -19,6 +20,22 @@ function typeOf(f) {
   return f.finding_type || f.vulnerability_name || "Uncategorized";
 }
 
+// Callers attach _scannedAt: the finding's own persisted created_at when
+// available (TargetDetail, from stored data), or the current session's
+// scan_date as a shared fallback (live Findings page — CanonicalFinding
+// itself carries no per-finding timestamp, only the session does).
+function scannedAtOf(f) {
+  if (!f._scannedAt) return null;
+  try {
+    return new Date(f._scannedAt).toLocaleString(undefined, {
+      year: "numeric", month: "short", day: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return f._scannedAt;
+  }
+}
+
 const accordionSx = {
   background: "var(--surface)",
   border: "1px solid var(--border)",
@@ -29,7 +46,8 @@ const accordionSx = {
 
 /**
  * Two-level accordion: Asset -> Vulnerability Type, with each unique path
- * as a clickable row that navigates to the finding's own detail page.
+ * as a row showing a quick summary (tool, score, tier) plus an explicit
+ * "View" button that navigates to the finding's own detail page.
  */
 export default function FindingsAccordion({ findings = [] }) {
   const navigate = useNavigate();
@@ -101,19 +119,29 @@ export default function FindingsAccordion({ findings = [] }) {
                     <AccordionDetails sx={{ display: "flex", flexDirection: "column", gap: 1, pt: 0 }}>
                       {items.map((f) => {
                         const risk = f.risk_score || {};
+                        const scannedAt = scannedAtOf(f);
                         return (
-                          <button
+                          <div
                             key={f.finding_id}
-                            onClick={() => navigate(`/findings/${f.finding_id}`)}
-                            className="flex items-center gap-3 min-w-0 w-full rounded-lg border p-3 text-left hover:border-[var(--primary)]/40 hover:bg-[var(--accent)]/40 smooth-transition cursor-pointer"
+                            className="flex items-center gap-3 min-w-0 w-full rounded-lg border p-3"
                             style={{ background: "var(--surface-2)", borderColor: "var(--border)" }}
                           >
-                            <span className="mono text-[12.5px] text-[var(--foreground)] truncate flex-1 min-w-0">{pathOf(f)}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="mono text-[12.5px] text-[var(--foreground)] truncate">{pathOf(f)}</p>
+                              {scannedAt && (
+                                <p className="text-[10.5px] text-[var(--muted-foreground)] mt-0.5">Scanned {scannedAt}</p>
+                              )}
+                            </div>
                             <ToolBadge tool={f.source_tool} />
                             {risk.final_score != null && <RiskScorePill score={risk.final_score} />}
                             <TierBadge tier={risk.priority_tier || "UNSCORED"} />
-                            <ChevronRight sx={{ fontSize: 16, color: "var(--muted-foreground)" }} />
-                          </button>
+                            <button
+                              onClick={() => navigate(`/findings/${f.finding_id}`)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded border text-[11px] font-semibold bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--accent)] smooth-transition cursor-pointer text-[var(--foreground)] shrink-0"
+                            >
+                              <ExternalLink className="size-3" /> View
+                            </button>
+                          </div>
                         );
                       })}
                     </AccordionDetails>

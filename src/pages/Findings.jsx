@@ -59,7 +59,12 @@ export default function Findings() {
     setVisibleColumns((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const findings = session?.findings || [];
+  // CanonicalFinding carries no per-finding timestamp — only the session
+  // does, so every finding in a live scan shares its scan_date.
+  const findings = useMemo(
+    () => (session?.findings || []).map((f) => ({ ...f, _scannedAt: session?.scan_date })),
+    [session]
+  );
 
   const filtered = useMemo(() => {
     return findings.filter((f) => {

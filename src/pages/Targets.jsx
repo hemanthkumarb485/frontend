@@ -52,7 +52,7 @@ export default function Targets() {
         {targets.map((t) => (
           <button
             key={t.host}
-            onClick={() => navigate(`/findings?host=${encodeURIComponent(t.host)}`)}
+            onClick={() => navigate(`/targets/${encodeURIComponent(t.host)}`)}
             className="text-left"
           >
             <Card className="hover:border-[var(--primary-600)] smooth-transition cursor-pointer h-full">

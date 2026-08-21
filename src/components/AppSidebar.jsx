@@ -8,6 +8,9 @@ import {
   TicketIcon,
   DocumentArrowDownIcon,
   ArrowRightStartOnRectangleIcon,
+  ArrowRightEndOnRectangleIcon,
+  UserCircleIcon,
+  MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { useScan } from "../context/ScanContext";
 import { useAuth } from "../context/AuthContext";
@@ -46,6 +49,13 @@ const SECTIONS = [
     items: [
       { to: "/tickets", label: "GitHub Tickets", icon: TicketIcon },
       { to: "/reports", label: "Reports", icon: DocumentArrowDownIcon },
+    ],
+  },
+  {
+    label: "Account",
+    items: [
+      { to: "/profile", label: "Profile", icon: UserCircleIcon },
+      { to: "/history", label: "Session History", icon: MagnifyingGlassIcon },
     ],
   },
 ];
@@ -151,7 +161,7 @@ export function AppSidebar() {
           </div>
         )}
 
-        {user && (
+        {user ? (
           <div className={cn("flex items-center gap-2 py-1", iconCollapsed ? "justify-center" : "px-2")}>
             {!iconCollapsed && (
               <p className="text-xs truncate flex-1 min-w-0" style={{ color: "var(--muted-foreground)" }} title={user.email}>
@@ -166,6 +176,19 @@ export function AppSidebar() {
               <ArrowRightStartOnRectangleIcon className="w-4 h-4" />
             </button>
           </div>
+        ) : (
+          <button
+            onClick={() => navigate("/login")}
+            className={cn(
+              "flex items-center gap-2 py-2 rounded-lg text-xs font-semibold smooth-transition cursor-pointer",
+              iconCollapsed ? "justify-center px-0" : "px-2.5"
+            )}
+            style={{ background: "var(--accent)", color: "var(--foreground)" }}
+            title="Sign in"
+          >
+            <ArrowRightEndOnRectangleIcon className="w-4 h-4 shrink-0" />
+            {!iconCollapsed && <span>Sign in to save reports</span>}
+          </button>
         )}
       </SidebarFooter>
     </Sidebar>

@@ -114,6 +114,10 @@ export async function uploadScansSync(files) {
   return res.data
 }
 
+export async function storeScanSession(session) {
+  const res = await api.post('/scan/store', session); return res.data
+}
+
 export async function connectGithubPAT(pat) {
   const res = await api.post('/github/connect-pat', { pat }); return res.data
 }
@@ -144,6 +148,18 @@ export async function getTargets() {
 }
 export async function getTargetFindings(host) {
   const res = await api.get(`/targets/${encodeURIComponent(host)}/findings`); return res.data
+}
+export async function getFindingById(findingId) {
+  const res = await api.get(`/findings/${encodeURIComponent(findingId)}`); return res.data
+}
+export async function getSessionHistory() {
+  const res = await api.get('/sessions'); return res.data
+}
+export async function getReports() {
+  const res = await api.get('/reports'); return res.data
+}
+export async function getReportDownloadUrl(reportId) {
+  const res = await api.get(`/reports/${encodeURIComponent(reportId)}/download`); return res.data
 }
 export async function getRemediationSuggestion(finding) {
   const res = await api.post('/remediation/suggest', finding); return res.data
