@@ -355,6 +355,53 @@ function ToolBarCard({ data, isDark }) {
   );
 }
 
+function NoiseReductionCard({ session }) {
+  const before = session.total_raw_findings || 0;
+  // total_after_fp_filter, not total_after_dedup: the false-positive pass
+  // runs after dedup (see risk_engine pipeline), so it's the truly final
+  // noise-reduced count — "what an analyst would actually have to open and
+  // read" — rather than just the post-dedup count, which can still include
+  // findings the FP rules go on to suppress.
+  const after = session.total_after_fp_filter ?? session.total_after_dedup ?? 0;
+  const reduction = before > 0 ? ((before - after) / before) * 100 : 0;
+  const afterPct = before > 0 ? Math.max((after / before) * 100, after > 0 ? 2 : 0) : 0;
+
+  if (before <= 0) return null;
+
+  return (
+    <Card className="w-full">
+      <CardHeader
+        title="Before / After Noise Reduction"
+        subtitle="What analysts would triage without the pipeline vs with it"
+      />
+      <div className="space-y-4 mt-2">
+        <div>
+          <div className="flex items-center justify-between text-[13px] mb-1.5">
+            <span className="text-[var(--muted-foreground)]">Before — raw scanner output</span>
+            <span className="mono font-bold text-[var(--foreground)]">{before.toLocaleString()}</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--accent)" }}>
+            <div className="h-full rounded-full bg-red-500" style={{ width: "100%" }} />
+          </div>
+        </div>
+        <div>
+          <div className="flex items-center justify-between text-[13px] mb-1.5">
+            <span className="text-[var(--muted-foreground)]">After — deduplicated & filtered</span>
+            <span className="mono font-bold text-[var(--foreground)]">{after.toLocaleString()}</span>
+          </div>
+          <div className="h-2.5 rounded-full overflow-hidden" style={{ background: "var(--accent)" }}>
+            <div className="h-full rounded-full bg-emerald-500 smooth-transition" style={{ width: `${afterPct}%` }} />
+          </div>
+        </div>
+      </div>
+      <p className="text-[12.5px] text-[var(--muted-foreground)] mt-4">
+        Analysts triage <span className="font-bold text-[var(--foreground)]">{reduction.toFixed(1)}%</span> fewer
+        findings while the pipeline's dedup + false-positive passes filter out the noise.
+      </p>
+    </Card>
+  );
+}
+
 function RiskScoreDensityCard({ findings, isDark }) {
   const ranges = [
     { name: "0-20 (Low)", value: 0 },
@@ -693,6 +740,9 @@ export default function Dashboard() {
       {/* Risk Score Distribution Area Chart */}
       <RiskScoreDensityCard findings={findings} isDark={isDark} />
 
+      {/* Before/After Noise Reduction */}
+      <NoiseReductionCard session={session} />
+
       {/* Session Info */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -727,7 +777,7 @@ export default function Dashboard() {
                 </div>
               </div>
               
-              {session.total_raw && (
+              {session.total_raw_findings > 0 && (
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-[var(--accent)]/50 rounded-lg text-[var(--muted-foreground)] shrink-0">
                     <ShieldCheckIcon className="w-5 h-5" />
@@ -735,7 +785,7 @@ export default function Dashboard() {
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Ingested Pipeline</p>
                     <p className="text-sm font-semibold text-[var(--foreground)] mt-0.5">
-                      {session.total_raw} raw findings → <span className="text-emerald-500 font-bold">{session.total_after_dedup} canonical</span>
+                      {session.total_raw_findings} raw findings → <span className="text-emerald-500 font-bold">{session.total_after_dedup} canonical</span>
                     </p>
                   </div>
                 </div>

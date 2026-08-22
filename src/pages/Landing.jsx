@@ -443,7 +443,7 @@ export default function Landing() {
             </li>
             <li className="flex items-center gap-3 text-sm text-[var(--foreground)] font-semibold">
               <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-              Duplicate noise reduced by up to 62%
+              Duplicate noise reduced by up to 88%
             </li>
             <li className="flex items-center gap-3 text-sm text-[var(--foreground)] font-semibold">
               <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />

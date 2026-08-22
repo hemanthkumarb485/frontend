@@ -35,6 +35,32 @@ export function getToolConfig(tool) {
   return TOOL_CONFIG[(tool || '').toLowerCase()] || { label: tool, color: 'text-slate-400', bg: 'bg-slate-900/30' }
 }
 
+/** Buckets a numeric risk_score.final_score (0-100) into a label/color for
+ * RiskScorePill's number coloring — a continuous "heat" read of the score
+ * itself, independent of the discrete P0-P3 tier. */
+export function getRiskLevel(score) {
+  if (score >= 85) return { label: 'Critical', color: 'var(--sev-critical)' }
+  if (score >= 70) return { label: 'High', color: 'var(--sev-high)' }
+  if (score >= 45) return { label: 'Medium', color: 'var(--sev-medium)' }
+  return { label: 'Low', color: 'var(--sev-low)' }
+}
+
+/** Maps risk_score.priority_tier (P0-P3/UNSCORED) to a label/color for
+ * RiskLevelBadge — deliberately tier-based, not score-based: a CWE-based
+ * finding (no CVE) is capped at P1 by risk_engine.py regardless of how high
+ * its numeric score is (no P0 without live-exploit evidence), so bucketing
+ * by raw score alone can label a P1 finding "R-Critical" while the P0
+ * summary card correctly reads 0 — this keeps the two in agreement. */
+export function getRiskLevelFromTier(tier) {
+  switch (tier) {
+    case 'P0': return { label: 'Critical', color: 'var(--sev-critical)' }
+    case 'P1': return { label: 'High', color: 'var(--sev-high)' }
+    case 'P2': return { label: 'Medium', color: 'var(--sev-medium)' }
+    case 'P3': return { label: 'Low', color: 'var(--sev-low)' }
+    default: return { label: 'Unscored', color: 'var(--muted-foreground)' }
+  }
+}
+
 /** Get priority tier counts from findings */
 export function getTierCounts(findings = []) {
   const counts = { P0: 0, P1: 0, P2: 0, P3: 0, UNSCORED: 0 }

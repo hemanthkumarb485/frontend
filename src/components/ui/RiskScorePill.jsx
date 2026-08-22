@@ -1,14 +1,8 @@
 import { clsx } from "clsx";
-
-function getColor(score) {
-  if (score >= 85) return { label: "Critical", color: "var(--sev-critical)" };
-  if (score >= 70) return { label: "High", color: "var(--sev-high)" };
-  if (score >= 45) return { label: "Medium", color: "var(--sev-medium)" };
-  return { label: "Low", color: "var(--sev-low)" };
-}
+import { getRiskLevel } from "../../utils/helpers";
 
 export function RiskScorePill({ score, className }) {
-  const { color } = getColor(score);
+  const { color } = getRiskLevel(score);
 
   return (
     <span

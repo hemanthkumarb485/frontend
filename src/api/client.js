@@ -127,14 +127,24 @@ export async function getGithubRepos(encryptedToken) {
 export async function createGithubIssue(payload, encryptedToken) {
   const res = await api.post('/github/issues/create', payload, { params: { encrypted_token: encryptedToken } }); return res.data
 }
+// The backend stores/computes all timestamps in UTC, but reports are
+// human-facing documents — showing UTC against the reader's own clock
+// forces a manual timezone conversion on every read, which reads as "the
+// timestamps are wrong" even when they're internally consistent. Passing
+// the browser's own IANA zone lets the backend display local time instead.
+const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone
+
 export async function exportJSON(session) {
-  const res = await api.post('/report/export/json', session, { responseType: 'blob' })
+  const res = await api.post('/report/export/json', session, { responseType: 'blob', params: { tz: localTz } })
   const url = window.URL.createObjectURL(new Blob([res.data]))
   const a = document.createElement('a'); a.href = url; a.download = 'vulnerax_report.json'; a.click()
   window.URL.revokeObjectURL(url)
 }
 export async function exportPDF(session) {
-  const res = await api.post('/report/export/pdf', session, { responseType: 'blob' })
+  // Detailed findings get an AI-generated overview + remediation (parallel
+  // Groq calls server-side) — generous timeout so a large session doesn't
+  // time out client-side while the backend is still working.
+  const res = await api.post('/report/export/pdf', session, { responseType: 'blob', timeout: 240000, params: { tz: localTz } })
   const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
   const a = document.createElement('a'); a.href = url; a.download = 'vulnerax_report.pdf'; a.click()
   window.URL.revokeObjectURL(url)
@@ -166,10 +176,4 @@ export async function getRemediationSuggestion(finding) {
 }
 export async function getAiOverview(finding) {
   const res = await api.post('/remediation/overview', finding); return res.data
-}
-export async function enhanceTicketDescription(finding, currentDescription) {
-  const res = await api.post('/github/tickets/enhance-description', {
-    finding_data: finding, current_description: currentDescription,
-  })
-  return res.data
 }

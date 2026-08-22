@@ -62,14 +62,16 @@ export default function Tickets() {
   }
 
   const openTicketComposer = (f) => {
-    if (!githubToken || !selectedRepo) {
-      setErr('Connect GitHub and select a repo first.')
+    // Which repo the ticket goes to is chosen inside TicketComposerModal
+    // itself now, so only being connected is required here.
+    if (!githubToken) {
+      setErr('Connect GitHub first.')
       return
     }
     setTicketDraft(f)
   }
 
-  const submitTicket = async (customDescription) => {
+  const submitTicket = async (customDescription, customRemediation, repoFullName) => {
     const f = ticketDraft
     if (!f) return
     setCreating(f.finding_id)
@@ -79,8 +81,9 @@ export default function Tickets() {
       const r = await createGithubIssue({
         finding_id: f.finding_id,
         finding_data: f,
-        repo_full_name: selectedRepo,
+        repo_full_name: repoFullName,
         custom_description: customDescription,
+        custom_remediation: customRemediation,
         labels: ['security', 'vulnerability', f.risk_score?.priority_tier?.toLowerCase() || 'vuln']
       }, githubToken)
       if (r.success) {
@@ -247,7 +250,7 @@ export default function Tickets() {
                       sx={{bgcolor:'#059669',color:'white',fontWeight:700,cursor:'pointer','&:hover':{bgcolor:'#047857'}, width: { xs: '100%', sm: 'auto' }, justifyContent: 'center'}}/>
                   </a>
                 ) : (
-                  <Button variant="outlined" size="small" disabled={isBusy||!githubToken||!selectedRepo}
+                  <Button variant="outlined" size="small" disabled={isBusy||!githubToken}
                     startIcon={isBusy?<CircularProgress size={12} color="inherit"/>:null}
                     onClick={()=>openTicketComposer(f)}
                     sx={{fontSize:'0.7rem',borderColor:'#2563eb',color:'#3b82f6',whiteSpace:'nowrap',textTransform:'none',

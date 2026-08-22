@@ -1,4 +1,5 @@
 import { clsx } from "clsx";
+import { getRiskLevelFromTier } from "../../utils/helpers";
 
 export function Badge({ children, className }) {
   return (
@@ -59,6 +60,31 @@ export function SeverityBadge({ severity }) {
       }}
     >
       {s.charAt(0).toUpperCase() + s.slice(1)}
+    </span>
+  );
+}
+
+// Maps priority_tier (P0-P3/UNSCORED) to "R-Critical" / "R-High" /
+// "R-Medium" / "R-Low" / "R-Unscored" — the "R-" prefix distinguishes it at
+// a glance from the Severity column (scanner-reported). Deliberately
+// tier-based rather than derived from the raw numeric score: risk_engine.py
+// caps CWE-based findings (no CVE) at P1 even when their score is high, so
+// bucketing by score alone could show "R-Critical" on a finding while the
+// P0 summary count elsewhere on the page correctly reads 0 — tying this to
+// the same priority_tier the rest of the app uses keeps them in agreement.
+export function RiskLevelBadge({ tier }) {
+  const { label, color } = getRiskLevelFromTier(tier);
+
+  return (
+    <span
+      className="mono inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide"
+      style={{
+        color,
+        background: `color-mix(in oklab, ${color} 16%, transparent)`,
+        border: `1px solid color-mix(in oklab, ${color} 38%, transparent)`,
+      }}
+    >
+      R-{label}
     </span>
   );
 }

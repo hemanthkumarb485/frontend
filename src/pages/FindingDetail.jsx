@@ -8,6 +8,7 @@ import { useAuth } from "../context/AuthContext";
 import { SeverityBadge, ToolBadge, TierBadge } from "../components/ui/Badge";
 import { getRemediationSuggestion, getAiOverview, createGithubIssue, getFindingById } from "../api/client";
 import TicketComposerModal from "../components/TicketComposerModal";
+import { MarkdownLite } from "../components/ui/MarkdownLite";
 
 const getSeverityColor = (sev) => {
   const s = String(sev).toLowerCase();
@@ -32,7 +33,7 @@ function Row({ label, value, tone }) {
 export default function FindingDetail() {
   const { findingId } = useParams();
   const navigate = useNavigate();
-  const { session, githubToken, selectedRepo, raisedTickets, markTicketRaised } = useScan();
+  const { session, githubToken, raisedTickets, markTicketRaised } = useScan();
   const { user } = useAuth();
   const [remediation, setRemediation] = useState(null); // { loading } | { text } | { error }
   const [aiOverview, setAiOverview] = useState(null); // { loading } | { text } | { error }
@@ -103,7 +104,10 @@ export default function FindingDetail() {
   const host = asset.hostname || asset.ip || asset.domain || asset.url || "—";
   const path = asset.path || asset.url || "—";
   const color = getSeverityColor(finding.severity);
-  const isGithubConnected = Boolean(githubToken && selectedRepo);
+  // Which repo the ticket goes to is now chosen inside TicketComposerModal
+  // itself, so only being connected (a token) is required to open it — a
+  // repo doesn't need to already be pre-selected on the Tickets page.
+  const isGithubConnected = Boolean(githubToken);
 
   // Fallback source material shown only if the AI call fails — raw NVD/
   // scanner text, never shown as the primary Overview.
@@ -133,7 +137,7 @@ export default function FindingDetail() {
     setTicketDraft(true);
   };
 
-  const submitTicket = async (customDescription) => {
+  const submitTicket = async (customDescription, customRemediation, repoFullName) => {
     setCreating(true);
     markTicketRaised(finding.finding_id, { status: "creating" });
     try {
@@ -141,8 +145,9 @@ export default function FindingDetail() {
         {
           finding_id: finding.finding_id,
           finding_data: finding,
-          repo_full_name: selectedRepo,
+          repo_full_name: repoFullName,
           custom_description: customDescription,
+          custom_remediation: customRemediation,
           labels: ["security", "vulnerability", risk.priority_tier?.toLowerCase() || "vuln"],
         },
         githubToken
@@ -161,7 +166,7 @@ export default function FindingDetail() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <button
         onClick={() => navigate(-1)}
         className="inline-flex items-center gap-1.5 text-[12.5px] font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] smooth-transition cursor-pointer"
@@ -264,7 +269,7 @@ export default function FindingDetail() {
 
           {aiOverview?.text && (
             <p className="mt-1.5 text-[12.5px] leading-relaxed text-[var(--foreground)] bg-[var(--surface-2)]/20 p-3.5 rounded-lg border border-[var(--border)]/40 whitespace-pre-line">
-              {aiOverview.text}
+              <MarkdownLite text={aiOverview.text} />
             </p>
           )}
 
@@ -320,7 +325,9 @@ export default function FindingDetail() {
           </div>
           {remediation?.error && <p className="mt-2 text-[11.5px] text-[var(--sev-critical)]">{remediation.error}</p>}
           {remediation?.text && (
-            <p className="mt-2.5 text-[12.5px] leading-relaxed text-[var(--foreground)] whitespace-pre-line">{remediation.text}</p>
+            <p className="mt-2.5 text-[12.5px] leading-relaxed text-[var(--foreground)] whitespace-pre-line">
+              <MarkdownLite text={remediation.text} />
+            </p>
           )}
           {!remediation && (
             <p className="mt-2 text-[11.5px] text-[var(--muted-foreground)]">
@@ -357,6 +364,7 @@ export default function FindingDetail() {
         onClose={() => setTicketDraft(false)}
         onSubmit={submitTicket}
         submitting={creating}
+        initialOverview={aiOverview?.text}
       />
     </div>
   );

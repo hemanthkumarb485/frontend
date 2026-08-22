@@ -246,6 +246,22 @@ button:active, a:active {
   transform: scale(0.98);
 }
 
+/* Chrome/Edge paint autofilled inputs with their own yellow/blue background
+   via an internal UA style that ignores normal background-color rules —
+   MUI's dark surface gets replaced by that tint the moment a browser
+   autofills or remembers a value (visible on the Login/Signup fields).
+   The only reliable override is an absurdly large inset box-shadow, which
+   Chrome lets you set and which paints over the UA background. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 100px var(--surface-2) inset !important;
+  box-shadow: 0 0 0 100px var(--surface-2) inset !important;
+  -webkit-text-fill-color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 .glow-box {
   border: 1px solid var(--border) !important;
   box-shadow: none !important;

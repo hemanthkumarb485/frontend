@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MagnifyingGlassIcon, ClockIcon, DocumentTextIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { ClockIcon, DocumentTextIcon, ArrowDownTrayIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { CircularProgress } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { getSessionHistory, getReportDownloadUrl } from "../api/client";
@@ -22,11 +22,32 @@ function fmtDateTime(iso) {
 
 export default function SessionHistory() {
   const { user } = useAuth();
-  const [uuidInput, setUuidInput] = useState(user?.id || "");
   const [sessions, setSessions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
+
+  const load = async () => {
+    setErr(null);
+    setLoading(true);
+    try {
+      const d = await getSessionHistory();
+      setSessions(d.sessions || []);
+    } catch (e) {
+      setErr(e.response?.data?.detail || e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // The backend already scopes /sessions to the caller's own JWT — there
+  // was never anything to actually search for, so load automatically
+  // instead of making a manual "paste your ID and search" step required
+  // just to see your own history.
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const download = async (reportId) => {
     setDownloadingId(reportId);
@@ -40,54 +61,22 @@ export default function SessionHistory() {
     }
   };
 
-  const search = async (e) => {
-    e.preventDefault();
-    setErr(null);
-    const trimmed = uuidInput.trim();
-    if (trimmed !== user.id) {
-      setErr("You can only search your own user ID — this doesn't match your account.");
-      setSessions(null);
-      return;
-    }
-    setLoading(true);
-    try {
-      const d = await getSessionHistory();
-      setSessions(d.sessions || []);
-    } catch (e) {
-      setErr(e.response?.data?.detail || e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="max-w-3xl space-y-6">
-      <PageHeader
-        title="Session History"
-        subtitle="Search by your user ID to see when you uploaded scans, which tools were used, and when reports were generated."
-      />
-
-      <form onSubmit={search} className="flex flex-col sm:flex-row gap-2">
-        <div
-          className="relative flex-1 px-4 py-2.5 rounded-lg border smooth-transition focus-within:border-[var(--primary)]/40"
-          style={{ background: "var(--surface)", borderColor: "var(--border)" }}
-        >
-          <MagnifyingGlassIcon className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted-foreground)]" />
-          <input
-            value={uuidInput}
-            onChange={(e) => setUuidInput(e.target.value)}
-            placeholder="Your user ID (UUID)"
-            className="mono w-full pl-7 bg-transparent text-[13px] focus:outline-none text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]"
-          />
-        </div>
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader
+          title="Session History"
+          subtitle="When you uploaded scans, which tools were used, and when reports were generated."
+        />
         <button
-          type="submit"
+          onClick={load}
           disabled={loading}
-          className="px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--primary-600)] hover:bg-[var(--primary-700)] text-[var(--primary-foreground)] smooth-transition cursor-pointer disabled:opacity-50"
+          className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-[12.5px] font-semibold border bg-[var(--surface)] border-[var(--border)] hover:bg-[var(--accent)] smooth-transition cursor-pointer disabled:opacity-50 text-[var(--foreground)]"
         >
-          {loading ? "Searching…" : "Search"}
+          <ArrowPathIcon className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
         </button>
-      </form>
+      </div>
 
       <p className="text-[12px] text-[var(--muted-foreground)]">
         Your user ID: <span className="mono">{user?.id}</span> — also on your{" "}
@@ -134,6 +123,17 @@ export default function SessionHistory() {
                     {s.total_after_dedup} finding{s.total_after_dedup === 1 ? "" : "s"}
                   </p>
                 </div>
+              </div>
+              <div className="mt-2">
+                {s.has_findings ? (
+                  <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-emerald-500">
+                    ● Findings stored — visible in <Link to="/targets" className="hover:underline">Targets</Link>
+                  </span>
+                ) : (
+                  <span className="text-[10.5px] font-semibold text-[var(--muted-foreground)]" title="Downloading a report doesn't persist findings — only the Store Report button on the Reports page does.">
+                    ○ Not stored to Targets — this scan's findings weren't saved (only a report was generated)
+                  </span>
+                )}
               </div>
               <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2" style={{ borderColor: "var(--border)" }}>
                 <div className="flex items-center gap-2">

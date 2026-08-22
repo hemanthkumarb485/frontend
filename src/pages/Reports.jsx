@@ -8,6 +8,7 @@ import {
   DocumentTextIcon,
   CloudArrowUpIcon,
   CheckCircleIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { getTierCounts } from "../utils/helpers";
 import { Card, CardHeader } from "../components/ui/Card";
@@ -134,7 +135,7 @@ export default function Reports() {
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Scan Session Summary */}
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-7 flex flex-col gap-6">
           <Card className="w-full">
             <CardHeader
               title="Scan Session Summary"
@@ -142,7 +143,7 @@ export default function Reports() {
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-5 mt-4">
               {[
-                ["Session ID", session.session_id?.slice(0, 12) + "\u2026"],
+                ["Session ID", session.session_id?.slice(0, 12) + "…"],
                 ["Tools Used", session.tools_detected?.join(", ")],
                 ["Total Findings", session.total_after_dedup],
                 ["Scored Findings", session.total_scored],
@@ -151,7 +152,7 @@ export default function Reports() {
                   "Processing Time",
                   session.processing_time_seconds
                     ? session.processing_time_seconds.toFixed(1) + "s"
-                    : "\u2014",
+                    : "—",
                 ],
                 ["P0 Critical", tierCounts.P0],
                 ["P1 High", tierCounts.P1],
@@ -163,53 +164,74 @@ export default function Reports() {
                     {k}
                   </p>
                   <p className="text-[15px] font-extrabold text-[var(--foreground)] tracking-tight">
-                    {String(v ?? "\u2014")}
+                    {String(v ?? "—")}
                   </p>
                 </div>
               ))}
             </div>
           </Card>
+
+          {/* Clarifies what "Store Report" actually saves vs. what a bare
+              download leaves behind — mark_report_generated() (fired by
+              JSON/PDF download) only upserts session-level metadata
+              (tools/counts/timestamp) into scan_sessions, visible later in
+              Session History; save_scan_session() (fired only by "Store
+              Report") is the one that writes the individual findings into
+              the findings/risk_scores tables, which is what Targets and
+              per-finding lookups actually query. Without clicking Store,
+              a downloaded report's findings aren't retrievable again later. */}
+          <Card className="w-full">
+            <CardHeader
+              title="What actually gets saved?"
+              icon={InformationCircleIcon}
+            />
+            <p className="text-[12.5px] leading-relaxed text-[var(--muted-foreground)]">
+              Downloading a <span className="font-semibold text-[var(--foreground)]">JSON or PDF</span> report
+              on its own does <span className="font-semibold text-[var(--foreground)]">not</span> save this
+              scan's findings to your account — it only records that the scan happened (tools used, finding
+              counts, and a timestamp) in your Session History. To keep the individual findings retrievable
+              later — in <span className="font-semibold text-[var(--foreground)]">Targets</span>, or for
+              future AI remediation and tickets — click{" "}
+              <span className="font-semibold text-[var(--foreground)]">Store Report</span> too. Without it,
+              this session's findings are gone once you navigate away.
+            </p>
+          </Card>
         </div>
 
         {/* Right Column: Stacked Export Options */}
         <div className="lg:col-span-5 flex flex-col gap-6">
-          {/* Store Report */}
+          {/* PDF Export */}
           <Card className="flex flex-col justify-between">
             <div className="flex items-start gap-4 mb-4">
-              <div className="grid size-11 shrink-0 place-items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
-                {stored ? (
-                  <CheckCircleIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
-                ) : (
-                  <CloudArrowUpIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
-                )}
+              <div
+                className="grid size-11 shrink-0 place-items-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
+              >
+                <DocumentTextIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(239,68,68,0.3)]" />
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-[15px] text-[var(--foreground)]">Store Report</h3>
+                <h3 className="font-bold text-[15px] text-[var(--foreground)]">
+                  PDF Report
+                </h3>
                 <p className="text-[12.5px] mt-1 text-[var(--muted-foreground)]">
-                  {user
-                    ? "Save this scan to your account — view it any time in Targets."
-                    : "Sign in to save this scan to your account and view it later in Targets."}
+                  Professional formatted report with risk breakdown (top 100
+                  findings included).
                 </p>
               </div>
             </div>
             <Button
-              onClick={handleStore}
-              disabled={loading === "store" || stored}
-              variant={stored ? "secondary" : "primary"}
+              onClick={() => handle("pdf")}
+              disabled={loading === "pdf"}
+              variant={loading === "pdf" ? "secondary" : "primary"}
               size="lg"
               className="w-full"
             >
-              {loading === "store" ? (
+              {loading === "pdf" ? (
                 <>
                   <CircularProgress size={16} color="inherit" />
-                  <span>Storing...</span>
+                  <span>Generating...</span>
                 </>
-              ) : stored ? (
-                <span>Stored</span>
-              ) : user ? (
-                <span>Store Report</span>
               ) : (
-                <span>Sign in to Store</span>
+                <span>Download PDF</span>
               )}
             </Button>
           </Card>
@@ -250,38 +272,43 @@ export default function Reports() {
             </Button>
           </Card>
 
-          {/* PDF Export */}
+          {/* Store Report */}
           <Card className="flex flex-col justify-between">
             <div className="flex items-start gap-4 mb-4">
-              <div
-                className="grid size-11 shrink-0 place-items-center rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 shadow-[0_0_12px_rgba(239,68,68,0.2)]"
-              >
-                <DocumentTextIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(239,68,68,0.3)]" />
+              <div className="grid size-11 shrink-0 place-items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
+                {stored ? (
+                  <CheckCircleIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
+                ) : (
+                  <CloudArrowUpIcon className="w-5 h-5 filter drop-shadow-[0_0_4px_rgba(16,185,129,0.4)]" />
+                )}
               </div>
               <div className="flex-1">
-                <h3 className="font-bold text-[15px] text-[var(--foreground)]">
-                  PDF Report
-                </h3>
+                <h3 className="font-bold text-[15px] text-[var(--foreground)]">Store Report</h3>
                 <p className="text-[12.5px] mt-1 text-[var(--muted-foreground)]">
-                  Professional formatted report with risk breakdown (top 100
-                  findings included).
+                  {user
+                    ? "Save this scan to your account — view it any time in Targets."
+                    : "Sign in to save this scan to your account and view it later in Targets."}
                 </p>
               </div>
             </div>
             <Button
-              onClick={() => handle("pdf")}
-              disabled={loading === "pdf"}
-              variant={loading === "pdf" ? "secondary" : "primary"}
+              onClick={handleStore}
+              disabled={loading === "store" || stored}
+              variant={stored ? "secondary" : "primary"}
               size="lg"
               className="w-full"
             >
-              {loading === "pdf" ? (
+              {loading === "store" ? (
                 <>
                   <CircularProgress size={16} color="inherit" />
-                  <span>Generating...</span>
+                  <span>Storing...</span>
                 </>
+              ) : stored ? (
+                <span>Stored</span>
+              ) : user ? (
+                <span>Store Report</span>
               ) : (
-                <span>Download PDF</span>
+                <span>Sign in to Store</span>
               )}
             </Button>
           </Card>
