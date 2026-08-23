@@ -56,7 +56,12 @@ export default function FindingDetail() {
     setRemoteFinding({ loading: true });
     getFindingById(findingId)
       .then((data) => setRemoteFinding({ data }))
-      .catch((e) => setRemoteFinding({ error: e.response?.data?.detail || e.message }));
+      .catch((e) => {
+        const message = e.response?.status === 401
+          ? "Sign in to view this finding."
+          : e.response?.data?.detail || e.message;
+        setRemoteFinding({ error: message });
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [findingId, Boolean(sessionFinding), Boolean(user)]);
 
@@ -66,7 +71,10 @@ export default function FindingDetail() {
       const r = await getAiOverview(target);
       setAiOverview({ text: r.overview });
     } catch (e) {
-      setAiOverview({ error: e.response?.data?.detail || e.message });
+      const message = e.response?.status === 401
+        ? "Sign in to generate an AI overview for this finding."
+        : e.response?.data?.detail || e.message;
+      setAiOverview({ error: message });
     }
   };
 
